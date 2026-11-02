@@ -1,5 +1,7 @@
 # GitHub Pulse
 
+<img src="docs/app-icon.png" width="128" height="128" alt="GitHub Pulse app icon: green contribution cells forming a pulse on charcoal">
+
 > **Development-stage source:** This project is not a v1.0.0 release. Live account-switching and installed test-widget verification remain incomplete. No signed/notarized binary is distributed.
 
 A lightweight native macOS contribution widget built with SwiftUI and WidgetKit.
@@ -94,3 +96,7 @@ Licensed under MIT.
 After separate approval to publish source, push only the reviewed manifest. Keep Local.xcconfig, build products, caches and review files excluded. Enable Actions and invoke **macOS checks** manually (workflow_dispatch) or inspect its first push run. No signing certificates or GitHub API credentials should be configured.
 
 Verify the runner reports a Swift 6-capable Xcode, the publication audit succeeds, both regression executables pass, the unsigned Release host/extension builds, and the embedded extension check passes. Review logs for accidental sensitive output. A passing run validates source compilation/tests, not signed sandbox behavior or desktop installation. If a runner/toolchain differs from local validation, record it and fix the workflow before tagging. Never upload an unsigned CI app as a signed installer. Record the run URL and commit SHA in the release checklist after the actual run.
+
+## App icon
+
+The original app mark turns contribution cells into a pulse, using the widget’s charcoal and green palette. No GitHub trademark artwork or third-party imagery is embedded. Regenerate the macOS icon and documentation preview with `swift scripts/make-icon.swift` on macOS.

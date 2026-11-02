@@ -78,3 +78,8 @@ Recommendation: the reviewed source is suitable for publication as an explicitly
 ## Approved source-publication preparation
 
 The owner explicitly approved source-only publication to DakshChaudhary2668/GitPulse, with no tag, release or binary. The existing docs/connection.png slot now contains the owner's supplied reference image, explicitly authorized for README publication. It includes the public username/avatar and historical activity figures; earlier statements that the only screenshot contains no account data are superseded. README identifies it as a historical design reference. The manifest remains exactly 26 paths. A development-stage warning prominently preserves the runtime HOLD status.
+
+
+## App icon source update
+
+Owner requested an original app icon and push after local preview. Added a native code-drawn charcoal/green pulse-grid mark, its reproducible AppKit generation script, macOS ICNS resource and README PNG preview. No third-party logo or imagery is used. The icon is a bundled design resource, not an application binary distribution. Publication manifest expands from 26 to 29 paths. Local icon preview was visually inspected; Release build must contain AppIcon.icns and CFBundleIconFile. The CI workflow now checks both. Existing runtime release HOLD gates remain in force.

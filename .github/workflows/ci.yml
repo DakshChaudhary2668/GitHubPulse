@@ -22,3 +22,8 @@ jobs:
         run: xcodebuild -project GitHubPulse.xcodeproj -scheme GitHubPulse -configuration Release -derivedDataPath "$RUNNER_TEMP/PulseBuild" CODE_SIGNING_ALLOWED=NO build
       - name: Check embedded extension
         run: test -f "$RUNNER_TEMP/PulseBuild/Build/Products/Release/GitHubPulse.app/Contents/PlugIns/PulseWidget.appex/Contents/MacOS/PulseWidget"
+      - name: Check bundled app icon
+        run: |
+          app="$RUNNER_TEMP/PulseBuild/Build/Products/Release/GitHubPulse.app"
+          test -s "$app/Contents/Resources/AppIcon.icns"
+          test "$(/usr/libexec/PlistBuddy -c 'Print CFBundleIconFile' "$app/Contents/Info.plist")" = "AppIcon"
