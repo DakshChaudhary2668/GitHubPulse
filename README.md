@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/app-icon.png" width="180" height="180" alt="GitHub Pulse app icon">
+<img src="docs/github-pulse-icon.png" width="180" height="180" alt="GitHub Pulse app icon">
 
 # GitHub Pulse
 
