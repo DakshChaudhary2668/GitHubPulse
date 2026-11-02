@@ -1,0 +1,24 @@
+name: macOS checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: xcodebuild -version && swift --version
+      - name: Audit publishable files
+        run: python3 scripts/audit.py
+      - name: Core regression tests
+        run: scripts/test.sh
+      - name: Build host and extension without signing
+        run: xcodebuild -project GitHubPulse.xcodeproj -scheme GitHubPulse -configuration Release -derivedDataPath "$RUNNER_TEMP/PulseBuild" CODE_SIGNING_ALLOWED=NO build
+      - name: Check embedded extension
+        run: test -f "$RUNNER_TEMP/PulseBuild/Build/Products/Release/GitHubPulse.app/Contents/PlugIns/PulseWidget.appex/Contents/MacOS/PulseWidget"
