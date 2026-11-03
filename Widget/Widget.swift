@@ -5,8 +5,11 @@ struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> Entry { Entry(date: Date(), snapshot: nil) }
     func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) { completion(Entry(date: Date(), snapshot: Storage.read())) }
     func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<Entry>) -> Void) {
-        if let cached = Storage.read(), Date().timeIntervalSince(cached.synced) < 1800 {
-            completion(Timeline(entries: [Entry(date: Date(), snapshot: cached)], policy: .after(cached.synced.addingTimeInterval(1800))))
+        let now = Date()
+        let changedAt = UserDefaults(suiteName: Storage.group)?.object(forKey: "appearanceChangedAt") as? Double
+        if let cached = Storage.read(),
+           let next = WidgetRefreshPolicy.cachedRefreshDate(synced: cached.synced, appearanceChangedAt: changedAt.map { Date(timeIntervalSince1970: $0) }, now: now) {
+            completion(Timeline(entries: [Entry(date: now, snapshot: cached)], policy: .after(next)))
             return
         }
         Task {
@@ -18,13 +21,16 @@ struct Provider: TimelineProvider {
 }
 struct WidgetCard: View {
     @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+    private var backgroundOpacity: Double { reduceTransparency || contrast == .increased ? 1 : 0.72 }
     @Environment(\.widgetFamily) private var family
     let entry: Entry
     var body: some View {
         PulseCard(snapshot: entry.snapshot, failed: entry.failed, widget: true, large: family == .systemLarge, small: family == .systemSmall)
             .containerBackground(for: .widget) {
-                if appearance == "light" { Color.white }
-                else if appearance == "dark" { Color.black }
+                if appearance == "light" { Color.white.opacity(backgroundOpacity) }
+                else if appearance == "dark" { Color.black.opacity(backgroundOpacity) }
                 else { Color(nsColor: .windowBackgroundColor) }
             }
             .widgetURL(URL(string: "https://github.com/\(entry.snapshot?.username ?? "")"))

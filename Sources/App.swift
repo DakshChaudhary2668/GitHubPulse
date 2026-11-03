@@ -14,7 +14,7 @@ import AVFoundation
 }
 struct SettingsView: View {
     @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
-    @State private var speech = AVSpeechSynthesizer()
+    private let speech = PulseSpeech.shared.synthesizer
     @State private var token = ""
     @State private var username = Storage.username
     @State private var confirmingDisconnect = false
@@ -30,15 +30,19 @@ struct SettingsView: View {
             Picker("Widget preview", selection: $previewSize) {
                 ForEach(["Small", "Medium", "Large"], id: \.self) { Text($0) }
             }.pickerStyle(.segmented)
-            Picker("Appearance (all widgets)", selection: $appearance) {
+            Picker("Appearance (all widgets)", selection: Binding(get: { appearance }, set: { value in
+                guard value != appearance else { return }
+                UserDefaults(suiteName: Storage.group)?.set(Date().timeIntervalSince1970, forKey: "appearanceChangedAt")
+                appearance = value
+                WidgetCenter.shared.reloadTimelines(ofKind: "GitHubPulse")
+            })) {
                 Text("System").tag("system")
                 Text("Light").tag("light")
                 Text("Dark").tag("dark")
             }.pickerStyle(.segmented)
-                .onChange(of: appearance) { WidgetCenter.shared.reloadTimelines(ofKind: "GitHubPulse") }
-            Toggle("Glass host preview", isOn: $glassPreview).disabled(appearance != "system")
+            Toggle("Glass host preview", isOn: $glassPreview)
             PulseCard(snapshot: snapshot, large: previewSize == "Large", small: previewSize == "Small", glass: glassPreview)
-                .frame(width: previewSize == "Small" ? 164 : 344, height: previewSize == "Large" ? 360 : 164)
+                .frame(width: previewSize == "Small" ? 164 : 344, height: previewSize == "Large" ? 344 : 164)
                 .frame(maxWidth: .infinity)
             Text("Preview changes immediately here. Resize the desktop widget separately using its context menu. Small and Large are square macOS widget formats; Medium is rectangular. Desktop glass and tint follow macOS widget appearance settings.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -78,10 +82,8 @@ struct SettingsView: View {
         speech.stopSpeaking(at: .immediate)
         // Read storage at the time of the action, never a count supplied by a URL.
         snapshot = Storage.read()
-        guard !busy, let snapshot else { return }
-        let utterance = AVSpeechUtterance(string: snapshot.speechSummary())
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-        speech.speak(utterance)
+        guard !busy, snapshot != nil else { return }
+        PulseSpeech.shared.speak()
     }
     @MainActor func disconnect() {
         speech.stopSpeaking(at: .immediate)

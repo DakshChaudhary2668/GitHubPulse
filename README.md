@@ -60,8 +60,8 @@ No clutter. No distractions. Just a native widget that feels like it belongs on 
 **01 — Clone**
 
 ```bash
-git clone https://github.com/DakshChaudhary2668/GitPulse.git
-cd GitPulse
+git clone https://github.com/DakshChaudhary2668/GitHubPulse.git
+cd GitHubPulse
 ```
 
 **02 — Configure**
@@ -103,6 +103,24 @@ The host offers a Glass Preview toggle, native glass on macOS 26+, and a materia
 
 It requests refresh opportunities approximately every 30 minutes, but macOS ultimately controls the update schedule. Manual refresh is available in the host app.
 
+### Offline behavior
+
+After a successful sync, GitHub Pulse keeps the last saved contributions and
+profile photo locally. If the Mac is offline, a failed refresh retains that
+snapshot instead of clearing it. The displayed sync time refers to the saved
+data; activity may therefore be out of date. Before the first successful sync,
+there is no activity to display and the app shows the connection/setup state.
+
+Theme switching and speaking saved contributions do not require internet.
+Appearance reloads briefly reuse saved activity instead of waiting for GitHub;
+normal data refresh resumes afterward. WidgetKit still controls render timing,
+so appearance changes are not guaranteed to be instantaneous.
+
+Reconnecting to the internet does not guarantee an immediate refresh. New data
+arrives at the next system-scheduled opportunity, or when you open the app and
+choose **Save & refresh**. The normal requested refresh interval is 30 minutes;
+macOS may run it later. Disconnect intentionally removes the saved account data.
+
 ### Appearance
 
 Use the app's **Appearance (all widgets)** selector for System, Light or Dark.
@@ -111,7 +129,9 @@ Medium/Large place it beside the speaker; Small places both controls below the p
 so the username retains its full-width row. The preference is shared across
 widgets, persists locally, and does not change GitHub credentials or activity.
 Light uses a white background and dark text; Dark uses black with light text.
-System follows macOS. Host glass preview is available in System mode.
+System follows macOS. Host glass preview remains available in every theme. Reduce Transparency and
+increased contrast use opaque fallbacks. Desktop backgrounds retain translucency
+where macOS permits it; widgets do not apply custom blur.
 macOS desktop tinting and background removal can override the final widget look.
 
 ### Widget sizes and local speech
@@ -122,10 +142,12 @@ The host preview selector changes only the preview, not an existing desktop widg
 Use the desktop widget context menu to change its size.
 
 Click **Speak contributions** below the host preview, or **Stop speaking** to
-interrupt playback. All three sizes have a speaker link that opens the host. Speech is explicit: no audio during refresh
+interrupt playback. All three sizes have a speaker button that runs a background audio action
+without requesting a settings window. Open the app from its Dock icon for settings. Speech is explicit: no audio during refresh
 or merely showing a widget. It reads the current saved snapshot, for example:
 “190 GitHub contributions. 1-day streak. Synced at 12:45 PM.” Older syncs include
-the date. No token, count or text is accepted through the speech URL.
+the date. Widget speech reads the saved snapshot locally; no token, count or text is
+passed through the widget action.
 
 Medium uses equal 14-point padding on all sides, a 14-by-7 grid of 9-point
 square cells, and statistics aligned toward the right. Its enlarged profile photo
@@ -134,8 +156,8 @@ Small uses a full-width bold username and centered heatmap. Large places the
 photo beside the username, centers the heatmap between two statistic rows,
 and shows annual contributions, streak, contributions in 14 weeks, and active
 days. Active days count dates with contributions in the displayed 14-week range.
-Repeated speaker links prefer the existing app window; the New Window command
-is removed.
+Widget speaker buttons run background audio without requesting a settings
+window. The New Window command is removed; open settings through the Dock.
 
 ---
 

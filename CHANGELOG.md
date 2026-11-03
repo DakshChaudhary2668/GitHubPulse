@@ -29,3 +29,11 @@ Not published or tagged. Signed account-switch/disconnect integration validation
 - Shared System, Light and Dark appearance selector and native widget buttons.
 - White/light and black/dark surfaces with the existing green heatmap.
 - Small speaker link and spaced right-aligned contribution/streak statistics.
+
+## Unreleased — background actions and release hardening
+
+- Widget speech runs as a background audio action without requesting a window.
+- Restored glass in Light/Dark and added translucent accessible widget backgrounds.
+- Large layout uses native preview dimensions, extra padding and spaced controls.
+- Avoid duplicate theme reloads and network waits when changing cached appearance.
+- Documented offline behavior and remaining release verification gates.

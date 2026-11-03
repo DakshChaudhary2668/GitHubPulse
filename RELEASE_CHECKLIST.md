@@ -1,58 +1,58 @@
-# Proposed v1.0.0 checklist
+# Proposed v1.0.0 release gate
 
-- [x] Prepare source, configuration templates, MIT license and project documentation.
-- [x] Validate unsigned Release host build and embedded extension locally.
-- [x] Run core regression checks and publication-pattern audit.
-- [ ] Review final publication manifest and screenshot manually.
-- [ ] Verify signed account migration with the existing identifiers, using a backup/disposable environment.
-- [ ] Verify account switching, Keychain errors, disconnect, stale concurrent refresh, cache removal and offline behavior with disposable credentials.
-- [ ] Verify both widget sizes, desktop appearance, accessibility and profile links on supported macOS versions.
-- [ ] Run GitHub Actions on the approved repository; no CI run is claimed before publication.
-- [ ] Enable private vulnerability reporting and repository secret scanning where available.
-- [ ] Confirm license ownership, documentation and any screenshot permissions.
-- [ ] Approve the security audit and exact publishable file set.
-- [ ] Only after separate explicit authorization: initialize/import Git, re-audit all history, push, tag v1.0.0 and publish release notes.
+Status: HOLD. Feature freeze: fixes, verification and documentation only.
+GitHub Pulse remains publicly available under MIT. Commercial options were
+discussed but no pricing, payment, license or visibility changes are authorized.
+Repository: https://github.com/DakshChaudhary2668/GitHubPulse
 
-No publishing action is authorized by this checklist. A signed/notarized binary release needs separate signing, notarization and verification work; do not distribute the unsigned CI build as an installable release.
+## Established evidence
 
-Final gate status: HOLD. See the dated gate table in AUDIT.md. Signed isolated storage switching/disconnect passed; live GitHub switching and confirmation/widget UI remain unverified by user choice. Hosted Actions and publication approval are still pending. The repository target supplied for this gate is DakshChaudhary2668/GitPulse.
+- [x] Public source repository and MIT license exist.
+- [x] Hosted CI passed for appearance commit `09a3372`: audit, regression tests,
+  unsigned host/extension build, embedded extension and app icon checks.
+- [x] Local signed host/extension builds and strict signature verification passed
+  for background audio and restored glass changes; hosted CI must check this candidate.
+- [x] Existing core, account-revision, isolated storage and speech-summary tests pass.
+- [x] Isolated signed Disconnect confirmation, cancellation and data removal were
+  verified with synthetic data; production storage was not used for those tests.
+- [x] Background speaker action produced two speech-start events with zero visible
+  host windows. Diagnostics contain only a window count, not account information.
+- [x] Light/Dark host glass previews and Small/Large desktop content were inspected.
+- [x] Previous signed installation's identity, account, Keychain and cache preserved.
 
-### Follow-up evidence
+## Remaining v1.0.0 blockers
 
-- [x] Read-only cache investigation: mtime matches production widget successful reload at 04:40:18 IST; legitimate-refresh explanation supported, exclusive attribution not proven.
-- [x] Negative production App Group/Keychain access checks denied under test entitlements.
-- [x] Separately provisioned signed host: confirmation, Cancel, Disconnect and empty UI verified with synthetic data.
-- [x] Post-UI Disconnect token/cache deletion independently verified; production app hashes unchanged.
-- [x] Reviewed all 26 publication candidates and account-free screenshot.
-- [x] Documented first hosted Actions run plan; manual workflow trigger added.
-- [ ] Test distinct extension from stable installation: temporary test bundle hit chronod descriptor/FOREIGN KEY errors; no successful render claimed.
-- [ ] Verify live switching and widget updates with disposable credentials, hosted CI and remaining integration gates before v1.0.0.
+- [x] Final Large padding/control-gap and footer inspected on the native widget.
+- [ ] Repeat Small/Medium/Large resizing after the installed candidate has rendered
+  every family. Old bundle-version archives caused blank first renders; recovery
+  was observed, but no permanent elimination of blanking is claimed.
+- [ ] Verify theme and speaker with host running, window closed, and host quit;
+  verify Dock opens/reuses the settings window. No blanket cold-start pass claimed.
+- [ ] Confirm audible background speech with the user; speech-start diagnostics
+  alone do not prove audible output quality.
+- [ ] Test Light/Dark/System, system tint, Reduce Transparency and increased contrast
+  across widget families, including the macOS 14 fallback on supported hardware.
+- [ ] Verify live account switching and widget cache isolation using disposable
+  credentials. User previously chose isolated testing; live testing stays unverified.
+- [ ] Review the Octocat-derived icon: GitHub's logo policy disallows its marks as
+  another product's app icon, including free/open-source products. Replace with
+  original artwork with user approval, or establish written permission.
+- [ ] Re-audit exact staged files, publication manifest and current history before
+  any further approved push; run hosted CI on the final candidate.
+- [ ] Obtain explicit approval before a version tag or GitHub Release.
 
-Source-only pre-release publication may be approved separately; no approval to publish, tag or distribute is implied. Signed binary distribution remains blocked on distribution signing/notarization and runtime verification.
+## Optional future binary distribution (not part of source release)
 
-### Adaptive widget update verification
+- [ ] Configure Developer ID distribution signing; only an Apple Development
+  identity was available during this audit. Do not distribute development/CI builds.
+- [ ] Verify hardened runtime, host/extension entitlements, distribution profiles,
+  notarization and stapling, and test the downloaded artifact with Gatekeeper.
+- [ ] Test clean installation and upgrade on a separate Mac/account without the
+  developer's signing setup, App Group data or credentials.
 
-- [x] Signed local host/extension build and signature checks.
-- [x] Core/storage/speech-summary regression tests and publication scan.
-- [x] Medium desktop rendering restored and padding visually checked.
-- [x] Host talkback audible, confirmed by user.
-- [ ] Final Small/Large desktop visual checks and speaker-link audio confirmation.
-- [ ] Hosted CI for this source update.
-- Stable version tag and binary distribution remain on HOLD.
+Source preparation is not authorization to publish a tag, release or binary.
+Detailed chronological evidence and earlier checkpoints remain in AUDIT.md.
 
-### Final layout source update
-
-- [x] User approved installed desktop layout and source push.
-- [x] Signed local build and Medium/Large host layout checks.
-- [x] Repeated speaker-link window reuse tested; direct Dock path unverified.
-- [x] Previous adaptive update hosted CI passed.
-- [ ] New hosted CI result must be checked after this push.
-- Earlier pending source approval is superseded; v1.0.0/binary HOLD remains.
-
-### Appearance source update
-
-- [x] Signed build, local tests and Medium desktop theme action.
-- [x] Small desktop layout and speaker-link host activation.
-- [ ] Independently verify Small speaker audio and all theme/accessibility combinations.
-- [ ] Investigate transient empty surface during native size changes.
-- v1.0.0 and signed binary distribution remain on HOLD.
+References: [GitHub logo policy](https://brand.github.com/foundations/logo),
+[Apple distribution](https://developer.apple.com/macos/distribution),
+[MIT license](https://opensource.org/license/mit).

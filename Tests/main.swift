@@ -46,3 +46,11 @@ let oldSync = Snapshot(username: "test", days: [], synced: now.addingTimeInterva
 assert(oldSync.speechSummary(now: now) != Snapshot(username: "test", days: [], synced: now, totalContributions: 17).speechSummary(now: now))
 assert(!oldSync.speechSummary(now: now).contains("Cached"))
 print("Passed: speech includes distinct sync date for older data without cache introduction")
+
+let refreshNow = Date(timeIntervalSince1970: 2_000_000_000)
+assert(WidgetRefreshPolicy.cachedRefreshDate(synced: refreshNow.addingTimeInterval(-100), appearanceChangedAt: nil, now: refreshNow) == refreshNow.addingTimeInterval(1700))
+assert(WidgetRefreshPolicy.cachedRefreshDate(synced: refreshNow.addingTimeInterval(-4000), appearanceChangedAt: refreshNow, now: refreshNow) == refreshNow.addingTimeInterval(15))
+assert(WidgetRefreshPolicy.cachedRefreshDate(synced: refreshNow.addingTimeInterval(-4000), appearanceChangedAt: refreshNow.addingTimeInterval(-15), now: refreshNow) == nil)
+assert(WidgetRefreshPolicy.cachedRefreshDate(synced: refreshNow.addingTimeInterval(-4000), appearanceChangedAt: refreshNow.addingTimeInterval(60), now: refreshNow) == nil)
+assert(WidgetRefreshPolicy.cachedRefreshDate(synced: refreshNow.addingTimeInterval(-4000), appearanceChangedAt: nil, now: refreshNow) == nil)
+print("Passed: theme reload uses cached activity without network wait; normal refresh resumes and future timestamps are rejected")

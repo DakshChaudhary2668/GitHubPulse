@@ -70,3 +70,16 @@ struct GitHub {
         return snapshot
     }
 }
+
+// Appearance reloads must not wait for GitHub; stale activity gets a later refresh.
+enum WidgetRefreshPolicy {
+    static func cachedRefreshDate(synced: Date, appearanceChangedAt: Date?, now: Date) -> Date? {
+        let due = synced.addingTimeInterval(1800)
+        if due > now { return due }
+        if let changed = appearanceChangedAt {
+            let elapsed = now.timeIntervalSince(changed)
+            if elapsed >= 0 && elapsed < 15 { return now.addingTimeInterval(15) }
+        }
+        return nil
+    }
+}

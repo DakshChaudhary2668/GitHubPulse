@@ -166,3 +166,49 @@ A running extension from before the app replacement produced a confirmed bundle-
   without deleting data. Logs showed environment-mismatch reloads; root cause
   and recurrence are not resolved. This remains a runtime limitation, not a
   claimed permanent fix. User authorized source push after the Small tap check.
+
+### Local background actions and restored glass
+
+- Speaker is now an AudioPlaybackIntent with openAppWhenRun false, using a
+  retained shared local speech controller. Theme also explicitly opts out of
+  opening the app. Existing account/cache/Keychain code is unchanged.
+- Privacy-safe speech delegate diagnostics confirmed actual speech-start events
+  in the host process twice with zero visible host windows. Audio output was
+  not independently heard. Direct Dock cold-launch behavior remains unverified.
+- Glass host preview stays enabled in Light/Dark; widget backgrounds use
+  translucent colors with opaque accessibility fallbacks, not custom blur.
+  Installed Light/Dark host previews and final Large Light desktop inspected.
+- Removed widget color-environment override. Later logs identified stale
+  bundle-version archives, so build version is now 9 and temporary development
+  copies were unregistered while retaining the installed application.
+- Fresh Small and Large renders recovered; final Large footer fits the native
+  344-point height. Repeated resize verification was interrupted by screen
+  capture errors; no permanent resolution of transient blanking is claimed.
+- Signed build and strict signature verification passed. Local only: no push.
+
+### Candidate 10 and appearance latency
+
+- Clean signed Release build, strict signature verification and all existing
+  tests passed. Added cache-policy tests for a recent appearance change, normal
+  refresh resumption, fresh cache and future timestamp rejection.
+- Removed host reloads triggered by externally observed preference changes.
+  Theme changes reuse a stale saved snapshot briefly rather than waiting on
+  GitHub. Refresh is requested afterward; WidgetKit scheduling is not immediate.
+- Candidate 10 installed. Cold-start widget speech produced a speech-start event
+  with zero visible host windows. Final Large padding and button gap inspected
+  in a desktop screenshot; full footer visible.
+- Older family archives were rejected once for a bundle-version mismatch then
+  all three families reported successful reloads. Repeated stable resize timing
+  and the latest theme latency are not established by these log events alone.
+- README now explains offline cached data, first-sync state, local theme/speech,
+  and scheduled/manual refresh after reconnect. No network settings were changed
+  and no physical offline simulation was performed.
+
+- Final theme action also omits its manual reload when executed in the widget
+  extension because WidgetKit already reloads after an intent. Host controls
+  retain an explicit request. Earlier runtime reload took about ten seconds;
+  immediate switching is not a supported guarantee and final latency is pending.
+
+- Final installed single-reload action changed Dark → System, observed on the
+  next check 14 seconds after the tap (not an exact transition-time measurement).
+  User authorized pushing current fixes; no stable release is authorized.

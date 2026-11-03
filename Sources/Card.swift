@@ -1,6 +1,8 @@
 import SwiftUI
 import WidgetKit
 import AppIntents
+import AVFoundation
+import OSLog
 
 struct PulseCard: View {
     let snapshot: Snapshot?
@@ -13,6 +15,11 @@ struct PulseCard: View {
     @Environment(\.colorScheme) private var systemScheme
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.widgetRenderingMode) private var renderingMode
+    private var ink: Color {
+        if widget && renderingMode != .fullColor { return .primary }
+        return appearance == "light" ? .black : (appearance == "dark" ? .white : .primary)
+    }
+    private var mutedInk: Color { ink.opacity(0.6) }
     private var stale: Bool { failed || snapshot.map { Date().timeIntervalSince($0.synced) > 3600 } ?? true }
     private var days: [Day?] { snapshot?.visible() ?? [] }
     private var periodTotal: Int { days.compactMap { $0 }.reduce(0) { $0 + $1.contributionCount } }
@@ -51,15 +58,15 @@ struct PulseCard: View {
                 footer(snapshot)
             } else {
                 Text("Connect GitHub").font(small ? .subheadline.bold() : .headline)
-                Text("Open GitHub Pulse to add your token securely.").font(.caption).foregroundStyle(.secondary)
+                Text("Open GitHub Pulse to add your token securely.").font(.caption).foregroundStyle(mutedInk)
                 Spacer(minLength: 0)
             }
         }
-        .padding(small ? 10 : 14)
+        .padding(small ? 10 : (large ? 16 : 14))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .foregroundStyle(.primary)
-        .modifier(PulseSurface(enabled: !widget, glass: glass && appearance == "system", solid: appearance == "light" ? .white : (appearance == "dark" ? .black : nil)))
-        .environment(\.colorScheme, appearance == "light" ? .light : (appearance == "dark" ? .dark : systemScheme))
+        .foregroundStyle(ink)
+        .modifier(PulseSurface(enabled: !widget, glass: glass, solid: appearance == "light" ? .white : (appearance == "dark" ? .black : nil)))
+        .modifier(PulseHostScheme(enabled: !widget, scheme: appearance == "light" ? .light : (appearance == "dark" ? .dark : systemScheme)))
     }
     private var header: some View {
         HStack(alignment: .top, spacing: 6) {
@@ -70,13 +77,13 @@ struct PulseCard: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if !small {
                     Text(snapshot == nil ? "GitHub" : (stale ? "Cached activity" : "GitHub activity"))
-                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                        .font(.system(size: 10)).foregroundStyle(mutedInk)
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, !small && !large ? 3 : 0)
             if large {
                 VStack(spacing: 4) {
-                    HStack(spacing: 2) { themeButton; if widget && snapshot != nil { speaker } }
+                    HStack(spacing: 8) { themeButton; if widget && snapshot != nil { speaker } }
                     avatar(size: 96)
                 }
             } else if !small {
@@ -93,7 +100,7 @@ struct PulseCard: View {
                 Spacer()
                 metric("\(snapshot.streak())", label: "Day streak", size: 20)
             }
-            heatmap.frame(width: 227, height: 112)
+            heatmap.frame(width: 191, height: 94)
                 .frame(maxWidth: .infinity)
             HStack(alignment: .top) {
                 metric("\(periodTotal)", label: "In 14 weeks", size: 18)
@@ -110,23 +117,23 @@ struct PulseCard: View {
             .accessibilityLabel("Appearance: \(appearance). Switch to \(appearance == "system" ? "light" : (appearance == "light" ? "dark" : "system"))")
     }
     private var speaker: some View {
-        Link(destination: URL(string: "githubpulse://speak")!) {
+        Button(intent: SpeakPulseContributions()) {
             Image(systemName: "speaker.wave.2").font(.caption).padding(4)
-        }.accessibilityLabel("Speak contributions in GitHub Pulse")
+        }.buttonStyle(.plain).accessibilityLabel("Speak contributions")
     }
     private func avatar(size: CGFloat) -> some View {
         Group {
             if let data = snapshot?.avatar, let image = NSImage(data: data) {
                 Image(nsImage: image).resizable().scaledToFill()
             } else {
-                Image(systemName: "person.crop.circle.fill").resizable().scaledToFit().foregroundStyle(.secondary)
+                Image(systemName: "person.crop.circle.fill").resizable().scaledToFit().foregroundStyle(mutedInk)
             }
         }.frame(width: size, height: size).clipShape(Circle()).accessibilityHidden(true)
     }
     private func metric(_ value: String, label: String, size: CGFloat = 24) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value).font(.system(size: size, weight: .semibold, design: .rounded)).monospacedDigit()
-            Text(label).font(.system(size: small ? 8 : (large ? 11 : 9))).foregroundStyle(.secondary)
+            Text(label).font(.system(size: small ? 8 : (large ? 11 : 9))).foregroundStyle(mutedInk)
         }.accessibilityElement(children: .combine)
     }
     private var heatmap: some View {
@@ -148,7 +155,7 @@ struct PulseCard: View {
         }.accessibilityElement(children: .contain)
     }
     private func cellColor(_ day: Day?) -> Color {
-        guard let day, day.contributionCount > 0 else { return Color.primary.opacity(contrast == .increased ? 0.22 : 0.09) }
+        guard let day, day.contributionCount > 0 else { return ink.opacity(contrast == .increased ? 0.22 : 0.09) }
         if widget && renderingMode != .fullColor { return .primary }
         let levels = ["FIRST_QUARTILE", "SECOND_QUARTILE", "THIRD_QUARTILE", "FOURTH_QUARTILE"]
         let colors: [Color] = [Color(red: 0.08, green: 0.38, blue: 0.19), Color(red: 0.10, green: 0.52, blue: 0.23), Color(red: 0.12, green: 0.68, blue: 0.28), Color(red: 0.15, green: 0.83, blue: 0.33)]
@@ -170,7 +177,7 @@ struct PulseCard: View {
             }
             if !small { Text(stale ? "Cached" : "Synced") }
             Text(snapshot.synced, style: .relative).lineLimit(1).minimumScaleFactor(0.8)
-        }.font(.system(size: small ? 8 : 9)).foregroundStyle(.secondary)
+        }.font(.system(size: small ? 8 : 9)).foregroundStyle(mutedInk)
     }
 }
 
@@ -195,14 +202,60 @@ struct PulseSurface: ViewModifier {
 
 struct SetPulseAppearance: AppIntent {
     static let title: LocalizedStringResource = "Change widget appearance"
+    static let openAppWhenRun = false
     @Parameter(title: "Appearance") var appearance: String
     init() {}
     init(appearance: String) { self.appearance = appearance }
     func perform() async throws -> some IntentResult {
         guard ["system", "light", "dark"].contains(appearance), !Storage.group.isEmpty,
               let defaults = UserDefaults(suiteName: Storage.group) else { return .result() }
+        defaults.set(Date().timeIntervalSince1970, forKey: "appearanceChangedAt")
         defaults.set(appearance, forKey: "widgetAppearance")
-        WidgetCenter.shared.reloadTimelines(ofKind: "GitHubPulse")
+        // WidgetKit reloads after an extension intent; only host actions need this request.
+        if Bundle.main.bundleURL.pathExtension != "appex" {
+            WidgetCenter.shared.reloadTimelines(ofKind: "GitHubPulse")
+        }
         return .result()
+    }
+}
+
+@MainActor final class PulseSpeech: NSObject, AVSpeechSynthesizerDelegate {
+    static let shared = PulseSpeech()
+    let synthesizer = AVSpeechSynthesizer()
+    private let logger = Logger(subsystem: "GitHubPulse", category: "Speech")
+    override init() {
+        super.init()
+        synthesizer.delegate = self
+    }
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            let count = NSApplication.shared.windows.filter(\.isVisible).count
+            self.logger.info("Local speech started; visible host windows: \(count)")
+        }
+    }
+    func speak() {
+        synthesizer.stopSpeaking(at: .immediate)
+        guard let snapshot = Storage.read() else { return }
+        let utterance = AVSpeechUtterance(string: snapshot.speechSummary())
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        synthesizer.speak(utterance)
+    }
+}
+
+struct SpeakPulseContributions: AudioPlaybackIntent {
+    static let title: LocalizedStringResource = "Speak contributions"
+    static let openAppWhenRun = false
+    @MainActor func perform() async throws -> some IntentResult {
+        PulseSpeech.shared.speak()
+        return .result()
+    }
+}
+
+private struct PulseHostScheme: ViewModifier {
+    let enabled: Bool
+    let scheme: ColorScheme
+    func body(content: Content) -> some View {
+        if enabled { content.environment(\.colorScheme, scheme) }
+        else { content }
     }
 }
