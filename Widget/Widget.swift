@@ -17,11 +17,16 @@ struct Provider: TimelineProvider {
     }
 }
 struct WidgetCard: View {
+    @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
     @Environment(\.widgetFamily) private var family
     let entry: Entry
     var body: some View {
         PulseCard(snapshot: entry.snapshot, failed: entry.failed, widget: true, large: family == .systemLarge, small: family == .systemSmall)
-            .containerBackground(for: .widget) { Color(nsColor: .windowBackgroundColor) }
+            .containerBackground(for: .widget) {
+                if appearance == "light" { Color.white }
+                else if appearance == "dark" { Color.black }
+                else { Color(nsColor: .windowBackgroundColor) }
+            }
             .widgetURL(URL(string: "https://github.com/\(entry.snapshot?.username ?? "")"))
     }
 }

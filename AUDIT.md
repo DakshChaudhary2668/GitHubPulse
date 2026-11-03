@@ -144,3 +144,25 @@ A running extension from before the app replacement produced a confirmed bundle-
   unverified independently; direct Dock repeated-open testing remains unverified.
 - Source publication is authorized. Stable tag and binary distribution remain
   on HOLD; previous no-publication statements describe earlier checkpoints.
+
+### Local appearance controls — not published
+
+- Shared System/Light/Dark preference uses only a new App Group defaults key.
+  Theme App Intent validates its value and requests widget timeline reload;
+  it does not read credentials or modify account/cache files.
+- Signed Release build and strict signature verification passed. Existing core,
+  speech and isolated storage tests passed; publication scan passed.
+- Medium/Large Light host previews and final Small Light/Dark previews inspected.
+  Actual Medium widget action changed the shared selection Light → Dark,
+  independently observed in the host selector. Desktop inactive tint remains
+  system-controlled; full-color desktop appearance across all families and
+  accessibility settings has not been independently verified.
+- Local installation only. No push/tag/release for this appearance update.
+
+- Follow-up: final Small desktop rendered the complete username, right-aligned
+  spaced statistics, centered graph and both controls. Its speaker link opened
+  the existing main host window. New audible output was not independently heard.
+- Resizing Medium to Small briefly produced an empty surface, then recovered
+  without deleting data. Logs showed environment-mismatch reloads; root cause
+  and recurrence are not resolved. This remains a runtime limitation, not a
+  claimed permanent fix. User authorized source push after the Small tap check.

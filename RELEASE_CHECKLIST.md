@@ -48,3 +48,11 @@ Source-only pre-release publication may be approved separately; no approval to p
 - [x] Previous adaptive update hosted CI passed.
 - [ ] New hosted CI result must be checked after this push.
 - Earlier pending source approval is superseded; v1.0.0/binary HOLD remains.
+
+### Appearance source update
+
+- [x] Signed build, local tests and Medium desktop theme action.
+- [x] Small desktop layout and speaker-link host activation.
+- [ ] Independently verify Small speaker audio and all theme/accessibility combinations.
+- [ ] Investigate transient empty surface during native size changes.
+- v1.0.0 and signed binary distribution remain on HOLD.

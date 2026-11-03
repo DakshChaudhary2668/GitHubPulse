@@ -23,3 +23,9 @@ Not published or tagged. Signed account-switch/disconnect integration validation
 - Enlarged profile photos, centered Small/Large heatmaps and bold identity text.
 - Large statistics show annual and 14-week contributions, streak and active days.
 - Repeated speaker links reuse the existing window in tested interactions.
+
+## Unreleased — appearance controls
+
+- Shared System, Light and Dark appearance selector and native widget buttons.
+- White/light and black/dark surfaces with the existing green heatmap.
+- Small speaker link and spaced right-aligned contribution/streak statistics.

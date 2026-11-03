@@ -103,6 +103,17 @@ The host offers a Glass Preview toggle, native glass on macOS 26+, and a materia
 
 It requests refresh opportunities approximately every 30 minutes, but macOS ultimately controls the update schedule. Manual refresh is available in the host app.
 
+### Appearance
+
+Use the app's **Appearance (all widgets)** selector for System, Light or Dark.
+Each widget also has an icon button that cycles System → Light → Dark → System.
+Medium/Large place it beside the speaker; Small places both controls below the photo
+so the username retains its full-width row. The preference is shared across
+widgets, persists locally, and does not change GitHub credentials or activity.
+Light uses a white background and dark text; Dark uses black with light text.
+System follows macOS. Host glass preview is available in System mode.
+macOS desktop tinting and background removal can override the final widget look.
+
 ### Widget sizes and local speech
 
 Small and Large use macOS's square footprints; Medium is a wide rectangle. All
@@ -111,8 +122,7 @@ The host preview selector changes only the preview, not an existing desktop widg
 Use the desktop widget context menu to change its size.
 
 Click **Speak contributions** below the host preview, or **Stop speaking** to
-interrupt playback. Medium and Large have a speaker link that opens the host.
-Small users can use the host button. Speech is explicit: no audio during refresh
+interrupt playback. All three sizes have a speaker link that opens the host. Speech is explicit: no audio during refresh
 or merely showing a widget. It reads the current saved snapshot, for example:
 “190 GitHub contributions. 1-day streak. Synced at 12:45 PM.” Older syncs include
 the date. No token, count or text is accepted through the speech URL.

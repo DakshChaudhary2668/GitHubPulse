@@ -13,6 +13,7 @@ import AVFoundation
     }
 }
 struct SettingsView: View {
+    @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
     @State private var speech = AVSpeechSynthesizer()
     @State private var token = ""
     @State private var username = Storage.username
@@ -29,7 +30,13 @@ struct SettingsView: View {
             Picker("Widget preview", selection: $previewSize) {
                 ForEach(["Small", "Medium", "Large"], id: \.self) { Text($0) }
             }.pickerStyle(.segmented)
-            Toggle("Glass host preview", isOn: $glassPreview)
+            Picker("Appearance (all widgets)", selection: $appearance) {
+                Text("System").tag("system")
+                Text("Light").tag("light")
+                Text("Dark").tag("dark")
+            }.pickerStyle(.segmented)
+                .onChange(of: appearance) { WidgetCenter.shared.reloadTimelines(ofKind: "GitHubPulse") }
+            Toggle("Glass host preview", isOn: $glassPreview).disabled(appearance != "system")
             PulseCard(snapshot: snapshot, large: previewSize == "Large", small: previewSize == "Small", glass: glassPreview)
                 .frame(width: previewSize == "Small" ? 164 : 344, height: previewSize == "Large" ? 360 : 164)
                 .frame(maxWidth: .infinity)

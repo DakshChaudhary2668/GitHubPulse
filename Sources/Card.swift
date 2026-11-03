@@ -1,5 +1,6 @@
 import SwiftUI
 import WidgetKit
+import AppIntents
 
 struct PulseCard: View {
     let snapshot: Snapshot?
@@ -8,6 +9,8 @@ struct PulseCard: View {
     var large = false
     var small = false
     var glass = true
+    @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
+    @Environment(\.colorScheme) private var systemScheme
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.widgetRenderingMode) private var renderingMode
     private var stale: Bool { failed || snapshot.map { Date().timeIntervalSince($0.synced) > 3600 } ?? true }
@@ -23,9 +26,15 @@ struct PulseCard: View {
                     largeActivity(snapshot)
                 } else if small {
                     HStack(spacing: 6) {
-                        avatar(size: 32)
-                        metric("\(snapshot.annualTotal)", label: "Past year", size: 13)
-                        metric("\(snapshot.streak())", label: "Day streak", size: 12)
+                        VStack(spacing: 0) {
+                            avatar(size: 32)
+                            HStack(spacing: 0) { themeButton; speaker }
+                        }
+                        Spacer(minLength: 0)
+                        HStack(spacing: 8) {
+                            metric("\(snapshot.annualTotal)", label: "Past year", size: 13)
+                            metric("\(snapshot.streak())", label: "Day streak", size: 12)
+                        }.fixedSize(horizontal: true, vertical: false)
                     }
                     heatmap.frame(width: 99, height: 48).frame(maxWidth: .infinity)
                 } else {
@@ -49,7 +58,8 @@ struct PulseCard: View {
         .padding(small ? 10 : 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .foregroundStyle(.primary)
-        .modifier(PulseSurface(enabled: !widget, glass: glass))
+        .modifier(PulseSurface(enabled: !widget, glass: glass && appearance == "system", solid: appearance == "light" ? .white : (appearance == "dark" ? .black : nil)))
+        .environment(\.colorScheme, appearance == "light" ? .light : (appearance == "dark" ? .dark : systemScheme))
     }
     private var header: some View {
         HStack(alignment: .top, spacing: 6) {
@@ -66,13 +76,12 @@ struct PulseCard: View {
                 .padding(.top, !small && !large ? 3 : 0)
             if large {
                 VStack(spacing: 4) {
-                    if widget && snapshot != nil { speaker }
+                    HStack(spacing: 2) { themeButton; if widget && snapshot != nil { speaker } }
                     avatar(size: 96)
                 }
             } else if !small {
                 Group {
-                    if widget && snapshot != nil { speaker }
-                    else { Color.clear.frame(height: 20) }
+                    HStack(spacing: 2) { themeButton; if widget && snapshot != nil { speaker } }
                 }.frame(width: 88).padding(.top, 3)
             }
         }
@@ -92,6 +101,13 @@ struct PulseCard: View {
                 metric("\(activeDays)", label: "Active days", size: 18)
             }
         }
+    }
+    private var themeButton: some View {
+        Button(intent: SetPulseAppearance(appearance: appearance == "system" ? "light" : (appearance == "light" ? "dark" : "system"))) {
+            Image(systemName: appearance == "system" ? "circle.lefthalf.filled" : (appearance == "light" ? "sun.max" : "moon"))
+                .font(.caption).padding(4)
+        }.buttonStyle(.plain)
+            .accessibilityLabel("Appearance: \(appearance). Switch to \(appearance == "system" ? "light" : (appearance == "light" ? "dark" : "system"))")
     }
     private var speaker: some View {
         Link(destination: URL(string: "githubpulse://speak")!) {
@@ -162,16 +178,31 @@ struct PulseCard: View {
 struct PulseSurface: ViewModifier {
     var enabled = true
     var glass = true
+    var solid: Color? = nil
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
     func body(content: Content) -> some View {
         if !enabled { content }
         else if !glass || reduceTransparency || contrast == .increased {
-            content.background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 20))
+            content.background(solid ?? Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 20))
         } else if #available(macOS 26.0, *) {
             content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
         } else {
             content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
         }
+    }
+}
+
+struct SetPulseAppearance: AppIntent {
+    static let title: LocalizedStringResource = "Change widget appearance"
+    @Parameter(title: "Appearance") var appearance: String
+    init() {}
+    init(appearance: String) { self.appearance = appearance }
+    func perform() async throws -> some IntentResult {
+        guard ["system", "light", "dark"].contains(appearance), !Storage.group.isEmpty,
+              let defaults = UserDefaults(suiteName: Storage.group) else { return .result() }
+        defaults.set(appearance, forKey: "widgetAppearance")
+        WidgetCenter.shared.reloadTimelines(ofKind: "GitHubPulse")
+        return .result()
     }
 }
