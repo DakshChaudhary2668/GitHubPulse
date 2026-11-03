@@ -118,7 +118,14 @@ or merely showing a widget. It reads the current saved snapshot, for example:
 the date. No token, count or text is accepted through the speech URL.
 
 Medium uses equal 14-point padding on all sides, a 14-by-7 grid of 9-point
-square cells, and statistics aligned toward the right.
+square cells, and statistics aligned toward the right. Its enlarged profile photo
+sits on the right, with the speaker aligned to the username row above it.
+Small uses a full-width bold username and centered heatmap. Large places the
+photo beside the username, centers the heatmap between two statistic rows,
+and shows annual contributions, streak, contributions in 14 weeks, and active
+days. Active days count dates with contributions in the displayed 14-week range.
+Repeated speaker links prefer the existing app window; the New Window command
+is removed.
 
 ---
 

@@ -118,3 +118,29 @@ Regression tests/publication scan/Release compilation pass. An isolated signed R
 A running extension from before the app replacement produced a confirmed bundle-version mismatch and blank Medium widget. Stopping that extension and using the existing host refresh restored content. The final Medium desktop screenshot shows all content inside the card. No account-container or Keychain clearing was used. Small/Large desktop layouts and the widget speech-link audio remain unverified in this final pass.
 
 - Final Medium desktop capture verifies larger 9-point square cells, right-aligned statistics and equal 14-point padding without clipping. Gallery previews were blank during reload testing; a final healthy gallery-preview render is not verified. No stable release or binary distribution is approved by these checks.
+
+### Local follow-up layout and window reuse
+
+- Added larger bold usernames, full-width Small identity text, bold active-day
+  counts for all families, a larger Large avatar, and speaker placement above the
+  Medium/Large avatar. Small and Large host previews visually checked.
+- URL events prefer the existing main scene; the New Window command is removed.
+  Two repeated installed-widget speaker actions reused the same main window,
+  and the Window menu listed one GitHub Pulse window. Direct Dock-click testing
+  was unavailable because Dock inspection timed out.
+- Signed local build and regression tests passed. These follow-up changes are
+  installed locally but are not included in the previously pushed source commit.
+
+### Final local layout pass — November 3, 2026
+
+- Enlarged Medium and Large profile photos, centered Small/Large heatmaps,
+  and arranged Large statistics around the centered graph. Medium username
+  and speaker share a small top offset. No account or credential code changed.
+- Signed Release build and strict embedded signature verification passed.
+  Installed Medium desktop rendering and Medium/Large host previews inspected.
+  User inspected and approved final desktop alignment before authorizing push.
+- Full local core/storage/speech regression suite and exact publication scan
+  are rerun for this commit. Small/Large final desktop inspection remains
+  unverified independently; direct Dock repeated-open testing remains unverified.
+- Source publication is authorized. Stable tag and binary distribution remain
+  on HOLD; previous no-publication statements describe earlier checkpoints.

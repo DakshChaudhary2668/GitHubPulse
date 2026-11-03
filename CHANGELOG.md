@@ -19,3 +19,7 @@ Not published or tagged. Signed account-switch/disconnect integration validation
 - Medium content padding and compact layout; enlarged app icon and asset catalogs.
 - Fresh cached timelines return immediately; network requests have bounded timeouts.
 - Document stale extension recovery after local app replacement.
+
+- Enlarged profile photos, centered Small/Large heatmaps and bold identity text.
+- Large statistics show annual and 14-week contributions, streak and active days.
+- Repeated speaker links reuse the existing window in tested interactions.

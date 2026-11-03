@@ -39,3 +39,12 @@ Source-only pre-release publication may be approved separately; no approval to p
 - [ ] Final Small/Large desktop visual checks and speaker-link audio confirmation.
 - [ ] Hosted CI for this source update.
 - Stable version tag and binary distribution remain on HOLD.
+
+### Final layout source update
+
+- [x] User approved installed desktop layout and source push.
+- [x] Signed local build and Medium/Large host layout checks.
+- [x] Repeated speaker-link window reuse tested; direct Dock path unverified.
+- [x] Previous adaptive update hosted CI passed.
+- [ ] New hosted CI result must be checked after this push.
+- Earlier pending source approval is superseded; v1.0.0/binary HOLD remains.

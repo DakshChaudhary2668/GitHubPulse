@@ -15,17 +15,28 @@ struct PulseCard: View {
     private var periodTotal: Int { days.compactMap { $0 }.reduce(0) { $0 + $1.contributionCount } }
     private var activeDays: Int { days.compactMap { $0 }.filter { $0.contributionCount > 0 }.count }
     var body: some View {
-        VStack(alignment: .leading, spacing: small ? 4 : (large ? 8 : 6)) {
+        VStack(alignment: .leading, spacing: 4) {
             header
             if let snapshot {
                 Spacer(minLength: 0)
-                HStack(spacing: small ? 8 : 14) {
-                    heatmap
-                    if !small && !large { Spacer(minLength: 12) }
-                    VStack(alignment: .leading, spacing: small || !large ? 4 : 8) {
-                        metric("\(snapshot.annualTotal)", label: "Past year", size: small ? 13 : (large ? 28 : 16))
-                        metric("\(snapshot.streak())", label: "Day streak", size: small ? 12 : (large ? 22 : 12))
-                    }.fixedSize(horizontal: true, vertical: false)
+                if large {
+                    largeActivity(snapshot)
+                } else if small {
+                    HStack(spacing: 6) {
+                        avatar(size: 32)
+                        metric("\(snapshot.annualTotal)", label: "Past year", size: 13)
+                        metric("\(snapshot.streak())", label: "Day streak", size: 12)
+                    }
+                    heatmap.frame(width: 99, height: 48).frame(maxWidth: .infinity)
+                } else {
+                    HStack(spacing: 6) {
+                        heatmap
+                        VStack(alignment: .leading, spacing: large ? 8 : 4) {
+                            metric("\(snapshot.annualTotal)", label: "Past year", size: large ? 24 : 16)
+                            metric("\(snapshot.streak())", label: "Day streak", size: large ? 18 : 12)
+                        }.fixedSize(horizontal: true, vertical: false)
+                        avatar(size: 88)
+                    }.frame(maxWidth: .infinity)
                 }
                 Spacer(minLength: 0)
                 footer(snapshot)
@@ -41,24 +52,60 @@ struct PulseCard: View {
         .modifier(PulseSurface(enabled: !widget, glass: glass))
     }
     private var header: some View {
-        HStack(spacing: 10) {
-            Group {
-                if let data = snapshot?.avatar, let image = NSImage(data: data) {
-                    Image(nsImage: image).resizable().scaledToFill()
-                } else { Image(systemName: "person.crop.circle.fill").resizable().scaledToFit().foregroundStyle(.secondary) }
-            }.frame(width: small ? 24 : (large ? 38 : 32), height: small ? 24 : (large ? 38 : 32)).clipShape(Circle()).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(snapshot?.username ?? "GitHub Pulse").font(.system(size: small ? 11 : 13, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.75)
-                if !small { Text(snapshot == nil ? "GitHub" : (stale ? "Cached activity" : "GitHub activity")).font(.caption).foregroundStyle(.secondary) }
-            }
-            Spacer(minLength: 0)
-            if widget && !small && snapshot != nil {
-                Link(destination: URL(string: "githubpulse://speak")!) {
-                    Image(systemName: "speaker.wave.2").font(.caption)
-                        .padding(4)
-                }.accessibilityLabel("Speak contributions in GitHub Pulse")
+        HStack(alignment: .top, spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(snapshot?.username ?? "GitHub Pulse")
+                    .font(.system(size: small ? 14 : (large ? 18 : 15), weight: .bold))
+                    .lineLimit(small ? 2 : 1).minimumScaleFactor(small ? 0.8 : 0.75)
+                    .fixedSize(horizontal: false, vertical: true)
+                if !small {
+                    Text(snapshot == nil ? "GitHub" : (stale ? "Cached activity" : "GitHub activity"))
+                        .font(.system(size: 10)).foregroundStyle(.secondary)
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, !small && !large ? 3 : 0)
+            if large {
+                VStack(spacing: 4) {
+                    if widget && snapshot != nil { speaker }
+                    avatar(size: 96)
+                }
+            } else if !small {
+                Group {
+                    if widget && snapshot != nil { speaker }
+                    else { Color.clear.frame(height: 20) }
+                }.frame(width: 88).padding(.top, 3)
             }
         }
+    }
+    private func largeActivity(_ snapshot: Snapshot) -> some View {
+        VStack(spacing: 4) {
+            HStack(alignment: .top) {
+                metric("\(snapshot.annualTotal)", label: "Past year", size: 20)
+                Spacer()
+                metric("\(snapshot.streak())", label: "Day streak", size: 20)
+            }
+            heatmap.frame(width: 227, height: 112)
+                .frame(maxWidth: .infinity)
+            HStack(alignment: .top) {
+                metric("\(periodTotal)", label: "In 14 weeks", size: 18)
+                Spacer()
+                metric("\(activeDays)", label: "Active days", size: 18)
+            }
+        }
+    }
+    private var speaker: some View {
+        Link(destination: URL(string: "githubpulse://speak")!) {
+            Image(systemName: "speaker.wave.2").font(.caption).padding(4)
+        }.accessibilityLabel("Speak contributions in GitHub Pulse")
+    }
+    private func avatar(size: CGFloat) -> some View {
+        Group {
+            if let data = snapshot?.avatar, let image = NSImage(data: data) {
+                Image(nsImage: image).resizable().scaledToFill()
+            } else {
+                Image(systemName: "person.crop.circle.fill").resizable().scaledToFit().foregroundStyle(.secondary)
+            }
+        }.frame(width: size, height: size).clipShape(Circle()).accessibilityHidden(true)
     }
     private func metric(_ value: String, label: String, size: CGFloat = 24) -> some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -98,10 +145,16 @@ struct PulseCard: View {
     }
     private func footer(_ snapshot: Snapshot) -> some View {
         HStack(spacing: 3) {
-            if !small { Text("Graph: 14 weeks"); Spacer(minLength: 4) }
-            Text(stale ? "Cached" : "Synced")
+            Group {
+                Text(large ? "Graph: 14 weeks" : (small ? "\(activeDays) active" : "\(activeDays) active days"))
+                    .fontWeight(.bold)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .accessibilityLabel(large ? "Graph: 14 weeks" : "\(activeDays) active days in the displayed 14 weeks")
+                Spacer(minLength: 3)
+            }
+            if !small { Text(stale ? "Cached" : "Synced") }
             Text(snapshot.synced, style: .relative).lineLimit(1).minimumScaleFactor(0.8)
-        }.font(.system(size: 10)).foregroundStyle(.secondary)
+        }.font(.system(size: small ? 8 : 9)).foregroundStyle(.secondary)
     }
 }
 

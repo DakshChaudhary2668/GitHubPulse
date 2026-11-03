@@ -3,7 +3,14 @@ import WidgetKit
 import AVFoundation
 
 @main struct PulseApp: App {
-    var body: some Scene { WindowGroup("GitHub Pulse") { SettingsView() }.windowResizability(.contentSize) }
+    var body: some Scene {
+        WindowGroup("GitHub Pulse", id: "main") {
+            SettingsView()
+                .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
+        }
+        .windowResizability(.contentSize)
+        .commands { CommandGroup(replacing: .newItem) {} }
+    }
 }
 struct SettingsView: View {
     @State private var speech = AVSpeechSynthesizer()
