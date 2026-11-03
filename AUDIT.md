@@ -83,3 +83,38 @@ The owner explicitly approved source-only publication to DakshChaudhary2668/GitP
 ## App icon source update
 
 Owner requested an original app icon and push after local preview. Added a native code-drawn charcoal/green pulse-grid mark, its reproducible AppKit generation script, macOS ICNS resource and README PNG preview. No third-party logo or imagery is used. The icon is a bundled design resource, not an application binary distribution. Publication manifest expands from 26 to 29 paths. Local icon preview was visually inspected; Release build must contain AppIcon.icns and CFBundleIconFile. The CI workflow now checks both. Existing runtime release HOLD gates remain in force.
+
+## Adaptive glass review candidate
+
+Only Sources/Card.swift, Sources/App.swift and Widget/Widget.swift implement the redesign. Core.swift and Storage.swift hashes match their pre-edit baseline. Signing files, account revisions, authentication, refresh provider, cache and Disconnect methods are preserved. Additional Large metrics are view-derived sums/counts over existing visible days. Native glass is host-only with availability and accessibility guards; widgets contain no custom material/blur. All three families are advertised.
+
+Regression tests/publication scan/Release compilation pass. An isolated signed ReleaseGate build and signature verification pass; the host size picker was exercised. Before/after medium/large and new Small light/dark renders were inspected. The host was made scrollable after inspection exposed clipped instructions. Final unsigned and isolated signed builds verify that change; strict signature verification passes. Actual tinted/accessible desktop rendering remains a separate runtime gate. No OS accessibility settings were changed and no native accessibility/tint rendering success is claimed. Production source data was read only for private preview rendering; credentials were not read or copied. No push, tag, installation or publication occurred.
+
+### Local speech and Medium spacing update
+
+- User confirmed that a Mac restart resolved the gallery icon after prior icon
+  resource and registration repairs; earlier refresh-only attempts did not.
+- Added explicit host speech/stop controls and Medium/Large widget speaker links.
+  The URL carries only an action. The host re-reads storage rather than accepting
+  a username, count, or text from a URL. No token access is added by speech.
+- Existing calculation and isolated storage checks pass, including new spoken
+  annual-total, legacy-cache, singular/plural and streak assertions.
+- Publication scan passes for 42 candidate files. No push/tag/release performed.
+- Audible playback and installed widget link interaction still require runtime
+  confirmation; passing string tests does not establish audible output.
+- Signed Release host and embedded extension build and strict signature verification
+  passed. Installed locally with unchanged host entitlements and a rollback archive.
+- Installed host UI shows speech/stop buttons, saved account data, and the padded
+  Medium preview. Activating Speak started the built-in audio device successfully
+  and later stopped it; audio-buffer diagnostics also appeared, so audible quality
+  is not inferred from those events. Desktop speaker-link behavior is unverified.
+- User confirmed audible talkback works. Follow-up wording now speaks only the
+  contribution count, day streak, and stored sync time (including the date for
+  older syncs). Updated tests, publication scan and signed Release build passed;
+  build 8 installed locally. No publication performed.
+
+### Post-update desktop recovery
+
+A running extension from before the app replacement produced a confirmed bundle-version mismatch and blank Medium widget. Stopping that extension and using the existing host refresh restored content. The final Medium desktop screenshot shows all content inside the card. No account-container or Keychain clearing was used. Small/Large desktop layouts and the widget speech-link audio remain unverified in this final pass.
+
+- Final Medium desktop capture verifies larger 9-point square cells, right-aligned statistics and equal 14-point padding without clipping. Gallery previews were blank during reload testing; a final healthy gallery-preview render is not verified. No stable release or binary distribution is approved by these checks.

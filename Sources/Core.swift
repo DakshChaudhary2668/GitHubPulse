@@ -8,6 +8,12 @@ struct Snapshot: Codable, Sendable {
     var avatar: Data?
     var totalContributions: Int?
     var annualTotal: Int { totalContributions ?? days.reduce(0) { $0 + $1.contributionCount } }
+    func speechSummary(now: Date = Date()) -> String {
+        let count = annualTotal
+        let streakDays = streak(now: now)
+        let syncTime = DateFormatter.localizedString(from: synced, dateStyle: Calendar.current.isDate(synced, inSameDayAs: now) ? .none : .short, timeStyle: .short)
+        return "\(count) GitHub \(count == 1 ? "contribution" : "contributions"). \(streakDays)-day streak. Synced at \(syncTime)."
+    }
     static var calendar: Calendar { var c = Calendar(identifier: .gregorian); c.timeZone = TimeZone(secondsFromGMT: 0)!; return c }
     static func key(_ date: Date) -> String { let f = DateFormatter(); f.calendar = calendar; f.timeZone = calendar.timeZone; f.dateFormat = "yyyy-MM-dd"; return f.string(from: date) }
     func visible(now: Date = Date()) -> [Day?] {
@@ -36,7 +42,9 @@ struct GitHub {
         return name
     }
     static func request(_ request: URLRequest) async throws -> Data {
-        let (data, response) = try await URLSession.shared.data(for: request)
+        var bounded = request
+        bounded.timeoutInterval = 8
+        let (data, response) = try await URLSession.shared.data(for: bounded)
         guard let http = response as? HTTPURLResponse else { throw PulseError.message("No server response.") }
         guard http.statusCode == 200 else { throw PulseError.message(http.statusCode == 401 ? "Token rejected. Update your GitHub token." : "GitHub returned HTTP \(http.statusCode). Check permissions or rate limits and retry later.") }
         return data

@@ -6,6 +6,8 @@
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleName</key>
@@ -15,10 +17,21 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>8</string>
 	<key>PulseAppGroup</key>
 	<string>$(TeamIdentifierPrefix)$(PULSE_GROUP_SUFFIX)</string>
 	<key>PulseKeychainGroup</key>
 	<string>$(AppIdentifierPrefix)$(PULSE_KEYCHAIN_SUFFIX)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>GitHub Pulse actions</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>githubpulse</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

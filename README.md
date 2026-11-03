@@ -44,8 +44,9 @@ No clutter. No distractions. Just a native widget that feels like it belongs on 
 | **Contribution Heatmap** | 14 weeks of daily GitHub activity in a compact, GitHub-green grid |
 | **Your GitHub Identity** | Actual profile avatar and configurable username |
 | **Contribution Insights** | Annual contribution total and current streak |
-| **Native macOS Widgets** | Medium and large WidgetKit layouts |
+| **Native macOS Widgets** | Small, Medium and Large layouts, each with a contribution heatmap |
 | **Smart Refresh** | System-managed updates with manual refresh |
+| **Local Talkback** | Speak annual contributions, day streak and saved sync time using macOS speech, without another API key |
 | **Offline Ready** | Cached contributions remain visible without internet |
 | **Secure by Design** | Credentials stored in macOS Keychain |
 | **Lightweight** | No Electron, webviews, third-party runtime dependencies or analytics |
@@ -54,7 +55,7 @@ No clutter. No distractions. Just a native widget that feels like it belongs on 
 
 ## Get Started
 
-<sub>Requires macOS 14+, Xcode 16+ with Swift 6 support, and a configured Apple development team.</sub>
+<sub>Requires macOS 14+, Xcode 26+ with the macOS 26 SDK (for the availability-guarded glass API), and a configured Apple development team.</sub>
 
 **01 — Clone**
 
@@ -85,7 +86,7 @@ For a classic token, use `read:user` where required. Avoid granting broad reposi
 
 **05 — Add to Desktop**
 
-Control-click your desktop → **Edit Widgets** → **GitHub Pulse** → choose Medium or Large.
+Control-click your desktop → **Edit Widgets** → **GitHub Pulse** → choose Small, Medium or Large.
 
 That's it. Your GitHub activity, always in sight.
 
@@ -98,9 +99,26 @@ That's it. Your GitHub activity, always in sight.
 | **SwiftUI + WidgetKit** | **macOS Keychain** | **System-managed refresh** |
 | No browser wrappers | No analytics or telemetry | No aggressive polling |
 
-The widget uses a charcoal interface, subtle borders, restrained typography and GitHub-green contribution cells.
+The host offers a Glass Preview toggle, native glass on macOS 26+, and a material fallback on macOS 14–15. Reduce Transparency and increased contrast select an opaque host surface. WidgetKit controls desktop backgrounds and tinting; the host toggle does not override desktop settings. GitHub-green cells remain visible in Full Color mode.
 
 It requests refresh opportunities approximately every 30 minutes, but macOS ultimately controls the update schedule. Manual refresh is available in the host app.
+
+### Widget sizes and local speech
+
+Small and Large use macOS's square footprints; Medium is a wide rectangle. All
+three show the 14-week heatmap, profile, annual contribution total and streak.
+The host preview selector changes only the preview, not an existing desktop widget.
+Use the desktop widget context menu to change its size.
+
+Click **Speak contributions** below the host preview, or **Stop speaking** to
+interrupt playback. Medium and Large have a speaker link that opens the host.
+Small users can use the host button. Speech is explicit: no audio during refresh
+or merely showing a widget. It reads the current saved snapshot, for example:
+“190 GitHub contributions. 1-day streak. Synced at 12:45 PM.” Older syncs include
+the date. No token, count or text is accepted through the speech URL.
+
+Medium uses equal 14-point padding on all sides, a 14-by-7 grid of 9-point
+square cells, and statistics aligned toward the right.
 
 ---
 
@@ -181,6 +199,8 @@ Tests are standalone Swift regression executables, not XCTest. Unsigned builds c
 <details>
 <summary><strong>Troubleshooting</strong></summary>
 
+- **Blank widget after replacing a development build:** A still-running old extension can cause a bundle-version mismatch. Quit the old GitHub Pulse widget process before replacing the app, then open the installed host and use Save & Refresh. Do not delete account containers or Keychain entries.
+- **Generic gallery icon:** Verify the installed signed app contains its icon assets. In one local session a Mac restart resolved a stale gallery icon after registration repairs; this is not a guaranteed fix.
 - **Widget missing:** Run the signed host from a stable Applications location and reopen Edit Widgets.
 - **Desktop widgets disabled:** Enable them in System Settings → Desktop & Dock.
 - **Appearance tinted:** Choose Full Color widget style.

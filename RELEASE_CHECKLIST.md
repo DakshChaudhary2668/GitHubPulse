@@ -29,3 +29,13 @@ Final gate status: HOLD. See the dated gate table in AUDIT.md. Signed isolated s
 - [ ] Verify live switching and widget updates with disposable credentials, hosted CI and remaining integration gates before v1.0.0.
 
 Source-only pre-release publication may be approved separately; no approval to publish, tag or distribute is implied. Signed binary distribution remains blocked on distribution signing/notarization and runtime verification.
+
+### Adaptive widget update verification
+
+- [x] Signed local host/extension build and signature checks.
+- [x] Core/storage/speech-summary regression tests and publication scan.
+- [x] Medium desktop rendering restored and padding visually checked.
+- [x] Host talkback audible, confirmed by user.
+- [ ] Final Small/Large desktop visual checks and speaker-link audio confirmation.
+- [ ] Hosted CI for this source update.
+- Stable version tag and binary distribution remain on HOLD.
