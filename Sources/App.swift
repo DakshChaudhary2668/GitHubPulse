@@ -206,9 +206,12 @@ private struct DesktopPulseCard: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+    private var isClear: Bool {
+        appearance == "transparent" && !frostedPanelBackground && !reduceTransparency && contrast != .increased
+    }
     var body: some View {
         PulseCard(snapshot: snapshot, desktop: true, large: size == "Large", small: size == "Small")
-            .shadow(color: .black.opacity(0.6), radius: 2, y: 1)
+            .shadow(color: isClear ? .black.opacity(0.6) : .clear, radius: 2, y: 1)
             .background {
                 if appearance == "light" { Color.white }
                 else if appearance == "dark" { Color.black }
