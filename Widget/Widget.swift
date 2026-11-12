@@ -23,15 +23,16 @@ struct WidgetCard: View {
     @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
-    private var backgroundOpacity: Double { reduceTransparency || contrast == .increased ? 1 : 0.72 }
+    private var backgroundOpacity: Double { reduceTransparency || contrast == .increased ? 1 : 0.20 }
     @Environment(\.widgetFamily) private var family
     let entry: Entry
     var body: some View {
         PulseCard(snapshot: entry.snapshot, failed: entry.failed, widget: true, large: family == .systemLarge, small: family == .systemSmall)
             .containerBackground(for: .widget) {
-                if appearance == "light" { Color.white.opacity(backgroundOpacity) }
-                else if appearance == "dark" { Color.black.opacity(backgroundOpacity) }
-                else { Color(nsColor: .windowBackgroundColor) }
+                if appearance == "transparent" && !reduceTransparency && contrast != .increased { PulseGlassTint() }
+                else if appearance == "light" { Color.white }
+                else if appearance == "dark" { Color.black }
+                else { Color(nsColor: .windowBackgroundColor).opacity(backgroundOpacity) }
             }
             .widgetURL(URL(string: "https://github.com/\(entry.snapshot?.username ?? "")"))
     }
@@ -42,7 +43,7 @@ struct WidgetCard: View {
             WidgetCard(entry: entry)
         }.configurationDisplayName("GitHub Pulse").description("Your last 14 weeks on GitHub.")
             .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
-            .containerBackgroundRemovable(true)
+            .containerBackgroundRemovable(false)
             .contentMarginsDisabled()
     }
 }

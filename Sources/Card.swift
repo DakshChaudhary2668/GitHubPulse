@@ -19,7 +19,15 @@ struct PulseCard: View {
         if widget && renderingMode != .fullColor { return .primary }
         return appearance == "light" ? .black : (appearance == "dark" ? .white : .primary)
     }
-    private var mutedInk: Color { ink.opacity(0.6) }
+    private var mutedInk: Color { ink.opacity(0.75) }
+    private var nextAppearance: String {
+        switch appearance {
+        case "system": "light"
+        case "light": "dark"
+        case "dark": "transparent"
+        default: "system"
+        }
+    }
     private var stale: Bool { failed || snapshot.map { Date().timeIntervalSince($0.synced) > 3600 } ?? true }
     private var days: [Day?] { snapshot?.visible() ?? [] }
     private var periodTotal: Int { days.compactMap { $0 }.reduce(0) { $0 + $1.contributionCount } }
@@ -65,7 +73,7 @@ struct PulseCard: View {
         .padding(small ? 10 : (large ? 16 : 14))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .foregroundStyle(ink)
-        .modifier(PulseSurface(enabled: !widget, glass: glass, solid: appearance == "light" ? .white : (appearance == "dark" ? .black : nil)))
+        .modifier(PulseSurface(enabled: !widget, glass: glass, transparent: appearance == "transparent", solid: appearance == "light" ? .white : (appearance == "dark" ? .black : nil)))
         .modifier(PulseHostScheme(enabled: !widget, scheme: appearance == "light" ? .light : (appearance == "dark" ? .dark : systemScheme)))
     }
     private var header: some View {
@@ -110,11 +118,11 @@ struct PulseCard: View {
         }
     }
     private var themeButton: some View {
-        Button(intent: SetPulseAppearance(appearance: appearance == "system" ? "light" : (appearance == "light" ? "dark" : "system"))) {
-            Image(systemName: appearance == "system" ? "circle.lefthalf.filled" : (appearance == "light" ? "sun.max" : "moon"))
+        Button(intent: SetPulseAppearance(appearance: nextAppearance)) {
+            Image(systemName: appearance == "light" ? "sun.max" : (appearance == "dark" ? "moon" : "circle.lefthalf.filled"))
                 .font(.caption).padding(4)
         }.buttonStyle(.plain)
-            .accessibilityLabel("Appearance: \(appearance). Switch to \(appearance == "system" ? "light" : (appearance == "light" ? "dark" : "system"))")
+            .accessibilityLabel("Appearance: \(appearance). Switch to \(nextAppearance)")
     }
     private var speaker: some View {
         Button(intent: SpeakPulseContributions()) {
@@ -192,6 +200,7 @@ struct PulseCard: View {
 struct PulseSurface: ViewModifier {
     var enabled = true
     var glass = true
+    var transparent = false
     var solid: Color? = nil
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
@@ -200,10 +209,27 @@ struct PulseSurface: ViewModifier {
         else if !glass || reduceTransparency || contrast == .increased {
             content.background(solid ?? Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 20))
         } else if #available(macOS 26.0, *) {
-            content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+            content.glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20))
         } else {
             content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
         }
+    }
+}
+
+// Static highlights work in WidgetKit without unsupported live blur effects.
+struct PulseGlassTint: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 24, style: .continuous)
+            .fill(Color.white.opacity(0.10))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(LinearGradient(colors: [.white.opacity(0.18), .clear, .white.opacity(0.03)], startPoint: .topLeading, endPoint: .bottomTrailing))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(LinearGradient(colors: [.white.opacity(0.48), .white.opacity(0.08), .white.opacity(0.22)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 0.75)
+            }
+            .accessibilityHidden(true)
     }
 }
 
@@ -214,7 +240,7 @@ struct SetPulseAppearance: AppIntent {
     init() {}
     init(appearance: String) { self.appearance = appearance }
     func perform() async throws -> some IntentResult {
-        guard ["system", "light", "dark"].contains(appearance), !Storage.group.isEmpty,
+        guard ["system", "light", "dark", "transparent"].contains(appearance), !Storage.group.isEmpty,
               let defaults = UserDefaults(suiteName: Storage.group) else { return .result() }
         defaults.set(Date().timeIntervalSince1970, forKey: "appearanceChangedAt")
         defaults.set(appearance, forKey: "widgetAppearance")

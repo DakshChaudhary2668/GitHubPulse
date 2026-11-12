@@ -39,6 +39,7 @@ struct SettingsView: View {
                 Text("System").tag("system")
                 Text("Light").tag("light")
                 Text("Dark").tag("dark")
+                Text("Transparent").tag("transparent")
             }.pickerStyle(.segmented)
             Toggle("Glass host preview", isOn: $glassPreview)
             PulseCard(snapshot: snapshot, large: previewSize == "Large", small: previewSize == "Small", glass: glassPreview)
