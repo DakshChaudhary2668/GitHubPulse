@@ -23,13 +23,27 @@ struct SettingsView: View {
     @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
     private let speech = PulseSpeech.shared.synthesizer
     @State private var token = ""
-    @State private var username = Storage.username
+    @State private var username: String
+    @State private var connectedUsername: String
+    @State private var tokenConfigured: Bool?
     @State private var confirmingDisconnect = false
     @State private var snapshot = Storage.read()
     @State private var status = ""
     @State private var busy = false
     @State private var previewSize = "Medium"
     @State private var glassPreview = true
+
+    init() {
+        let savedUsername = Storage.username
+        _username = State(initialValue: savedUsername)
+        _connectedUsername = State(initialValue: savedUsername)
+    }
+
+    private var connectionStatus: String {
+        if !status.isEmpty { return status }
+        guard let tokenConfigured else { return "Checking Keychain…" }
+        return tokenConfigured ? "Token stored in Keychain" : "Token not configured"
+    }
 
     var body: some View {
         ScrollView {
@@ -76,11 +90,11 @@ struct SettingsView: View {
                 Button(busy ? "Syncing…" : "Save & refresh") { Task { await refresh() } }.disabled(busy)
                 Link("Create token", destination: URL(string: "https://github.com/settings/tokens")!)
                 Spacer()
-                Link("Profile ↗", destination: URL(string: "https://github.com/\(Storage.username)")!)
+                Link("Profile ↗", destination: URL(string: "https://github.com/\(connectedUsername)")!)
             }
-            Text(status.isEmpty ? ((try? Storage.token(username: Storage.username)) == nil ? "Token not configured" : "Token stored in Keychain") : status).font(.caption).textSelection(.enabled)
+            Text(connectionStatus).font(.caption).textSelection(.enabled)
             Text("Use a classic token with read:user. Private activity depends on GitHub permissions and your profile visibility settings. Your token is stored only in Keychain.").font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Button("Disconnect GitHub", role: .destructive) { confirmingDisconnect = true }.disabled(busy || Storage.username.isEmpty)
+            Button("Disconnect GitHub", role: .destructive) { confirmingDisconnect = true }.disabled(busy || connectedUsername.isEmpty)
                 .confirmationDialog("Disconnect GitHub?", isPresented: $confirmingDisconnect) {
                     Button("Disconnect", role: .destructive) { disconnect() }
                 } message: { Text("Removes the saved token and cached activity from this Mac. Revoke the token separately on GitHub if needed.") }
@@ -88,6 +102,13 @@ struct SettingsView: View {
             Text("Control-click the desktop → Edit Widgets → GitHub Pulse. Choose Small, Medium or Large and place it on your desktop. macOS chooses refresh times; refresh opportunities are requested every 30 minutes.").font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }.padding(24)
         }.frame(width: 408, height: previewSize == "Large" ? 780 : 700)
+        .task(id: connectedUsername) {
+            let name = connectedUsername
+            let configured = await Task.detached {
+                !name.isEmpty && (try? Storage.token(username: name)) != nil
+            }.value
+            if !Task.isCancelled { tokenConfigured = configured }
+        }
         .onChange(of: previewSize) { _, value in PulseDesktopPanel.shared.resize(value) }
         .onOpenURL { url in
             guard url.scheme == "githubpulse", url.host == "speak", url.path.isEmpty,
@@ -105,7 +126,7 @@ struct SettingsView: View {
     }
     @MainActor func disconnect() {
         speech.stopSpeaking(at: .immediate)
-        do { try Storage.disconnect(); token = ""; username = ""; snapshot = nil; status = "Disconnected. Revoke the token on GitHub if you no longer need it." }
+        do { try Storage.disconnect(); token = ""; username = ""; connectedUsername = ""; snapshot = nil; status = "Disconnected. Revoke the token on GitHub if you no longer need it." }
         catch { snapshot = Storage.read(); status = error.localizedDescription }
         WidgetCenter.shared.reloadAllTimelines()
         NotificationCenter.default.post(name: .pulseStorageChanged, object: nil)
@@ -114,6 +135,7 @@ struct SettingsView: View {
         guard !busy else { return }; speech.stopSpeaking(at: .immediate); busy = true; defer { busy = false }
         do {
             try Storage.connect(username: username, token: token.trimmingCharacters(in: .whitespacesAndNewlines)); token = ""
+            connectedUsername = Storage.username
             snapshot = Storage.read()
             NotificationCenter.default.post(name: .pulseStorageChanged, object: nil)
             WidgetCenter.shared.reloadAllTimelines()
