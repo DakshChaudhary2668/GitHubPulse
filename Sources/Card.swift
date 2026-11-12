@@ -8,6 +8,7 @@ struct PulseCard: View {
     let snapshot: Snapshot?
     var failed = false
     var widget = false
+    var desktop = false
     var large = false
     var small = false
     var glass = true
@@ -16,6 +17,7 @@ struct PulseCard: View {
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.widgetRenderingMode) private var renderingMode
     private var ink: Color {
+        if desktop && appearance == "transparent" { return .white }
         if widget && renderingMode != .fullColor { return .primary }
         return appearance == "light" ? .black : (appearance == "dark" ? .white : .primary)
     }
@@ -73,7 +75,7 @@ struct PulseCard: View {
         .padding(small ? 10 : (large ? 16 : 14))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .foregroundStyle(ink)
-        .modifier(PulseSurface(enabled: !widget, glass: glass, transparent: appearance == "transparent", solid: appearance == "light" ? .white : (appearance == "dark" ? .black : nil)))
+        .modifier(PulseSurface(enabled: !widget && !desktop, glass: glass, transparent: appearance == "transparent", solid: appearance == "light" ? .white : (appearance == "dark" ? .black : nil)))
         .modifier(PulseHostScheme(enabled: !widget, scheme: appearance == "light" ? .light : (appearance == "dark" ? .dark : systemScheme)))
     }
     private var header: some View {
@@ -91,12 +93,12 @@ struct PulseCard: View {
                 .padding(.top, !small && !large ? 3 : 0)
             if large {
                 VStack(spacing: 4) {
-                    HStack(spacing: 8) { themeButton; if widget && snapshot != nil { speaker } }
+                    HStack(spacing: 8) { themeButton; if (widget || desktop) && snapshot != nil { speaker } }
                     avatar(size: 96)
                 }
             } else if !small {
                 Group {
-                    HStack(spacing: 2) { themeButton; if widget && snapshot != nil { speaker } }
+                    HStack(spacing: 2) { themeButton; if (widget || desktop) && snapshot != nil { speaker } }
                 }.frame(width: 88).padding(.top, 3)
             }
         }
