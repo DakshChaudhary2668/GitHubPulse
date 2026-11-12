@@ -252,3 +252,8 @@ A running extension from before the app replacement produced a confirmed bundle-
 - Build 24 passed the signed Release build and core/storage regression suite. The installed settings confirmed frosting is hidden outside Transparent and turning it off leaves panel visibility enabled. Light-mode text shadow was removed in code; the desktop panel appearance was not captured after that change.
 - The heatmap benchmark measured the calendar calculation only. It changed from 196 calls taking approximately 1.38 seconds to one call taking under 1 millisecond on the test Mac. Account storage and permissions are unchanged.
 - The local development-profile renewal agent completed its initial expiry check without rebuilding. A scheduled renewal has not yet run. The agent, its logs, and its private source and signing configuration are excluded from publication.
+
+## Desktop panel helper verification — 2026-11-13
+
+- Build 25 uses a separate panel process of the signed app. It watches shared settings and cache changes, shows a fixed sync time, and stops when the panel is hidden. The helper does not start its own GitHub requests.
+- Signed Release build and regression tests passed. In the installed app, hiding the panel stopped the helper. After reopening the panel and quitting the main app, only the helper remained, and its window creation had been logged. Long-duration battery impact was not measured.

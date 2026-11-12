@@ -1,9 +1,20 @@
 import SwiftUI
 import WidgetKit
 import AVFoundation
-import Combine
+import Darwin
+import OSLog
 
-@main struct PulseApp: App {
+@main struct PulseEntry {
+    @MainActor static func main() {
+        if CommandLine.arguments.contains("--desktop-panel") {
+            PulseDesktopPanel.shared.runHelper()
+        } else {
+            PulseApp.main()
+        }
+    }
+}
+
+struct PulseApp: App {
     init() {
         PulseDesktopPanel.shared.startObservingAppearance()
     }
@@ -30,7 +41,7 @@ struct SettingsView: View {
     @State private var snapshot = Storage.read()
     @State private var status = ""
     @State private var busy = false
-    @State private var previewSize = "Medium"
+    @AppStorage("desktopPanelSize", store: UserDefaults(suiteName: Storage.group)) private var previewSize = "Medium"
     @State private var glassPreview = true
 
     init() {
@@ -75,7 +86,7 @@ struct SettingsView: View {
             PulseCard(snapshot: snapshot, large: previewSize == "Large", small: previewSize == "Small", glass: glassPreview)
                 .frame(width: previewSize == "Small" ? 164 : 344, height: previewSize == "Large" ? 344 : 164)
                 .frame(maxWidth: .infinity)
-            Text("Transparent opens the desktop panel. Turning off frosting leaves the panel visible with a clear background. Keep GitHub Pulse running to use the panel.")
+            Text("Transparent opens the desktop panel. Turn off frosting for a clear background. The panel stays open when you quit GitHub Pulse.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Button("Speak contributions", systemImage: "speaker.wave.2") { speakContributions() }
@@ -109,7 +120,6 @@ struct SettingsView: View {
             }.value
             if !Task.isCancelled { tokenConfigured = configured }
         }
-        .onChange(of: previewSize) { _, value in PulseDesktopPanel.shared.resize(value) }
         .onOpenURL { url in
             guard url.scheme == "githubpulse", url.host == "speak", url.path.isEmpty,
                   url.query == nil, url.fragment == nil else { return }
@@ -129,7 +139,6 @@ struct SettingsView: View {
         do { try Storage.disconnect(); token = ""; username = ""; connectedUsername = ""; snapshot = nil; status = "Disconnected. Revoke the token on GitHub if you no longer need it." }
         catch { snapshot = Storage.read(); status = error.localizedDescription }
         WidgetCenter.shared.reloadAllTimelines()
-        NotificationCenter.default.post(name: .pulseStorageChanged, object: nil)
     }
     @MainActor func refresh() async {
         guard !busy else { return }; speech.stopSpeaking(at: .immediate); busy = true; defer { busy = false }
@@ -137,42 +146,119 @@ struct SettingsView: View {
             try Storage.connect(username: username, token: token.trimmingCharacters(in: .whitespacesAndNewlines)); token = ""
             connectedUsername = Storage.username
             snapshot = Storage.read()
-            NotificationCenter.default.post(name: .pulseStorageChanged, object: nil)
             WidgetCenter.shared.reloadAllTimelines()
             let result = try await Storage.refresh()
             snapshot = result; status = "Synced successfully."
-            NotificationCenter.default.post(name: .pulseStorageChanged, object: nil)
             WidgetCenter.shared.reloadAllTimelines()
         } catch { status = error.localizedDescription + (snapshot == nil ? "" : " Showing cached data.") }
     }
 }
 
-extension Notification.Name {
-    static let pulseStorageChanged = Notification.Name("PulseStorageChanged")
-}
-
 @MainActor final class PulseDesktopPanel: ObservableObject {
     static let shared = PulseDesktopPanel()
     @Published private(set) var isVisible = false
+    @Published private(set) var snapshot: Snapshot?
     private var panel: NSPanel?
-    private var size = "Medium"
     private let defaults = UserDefaults(suiteName: Storage.group)
     private var lastAppearance: String?
-    private var appearanceObserver: AnyCancellable?
+    private var settingsObserver: PanelPreferenceObserver?
+    private var frostObserver: PanelPreferenceObserver?
+    private var cacheObserver: DispatchSourceFileSystemObject?
+    private let logger = Logger(subsystem: "GitHubPulse", category: "DesktopPanel")
 
     func startObservingAppearance() {
-        // A native widget can change the shared preference from another process.
-        appearanceObserver = Timer.publish(every: 1, on: .main, in: .common).autoconnect().sink { [weak self] _ in
-            guard let self else { return }
-            let appearance = defaults?.string(forKey: "widgetAppearance") ?? "system"
-            guard appearance != lastAppearance else { return }
-            lastAppearance = appearance
-            if appearance == "transparent", panel?.isVisible != true { show() }
+        guard let defaults, settingsObserver == nil else { return }
+        lastAppearance = defaults.string(forKey: "widgetAppearance")
+        settingsObserver = PanelPreferenceObserver(defaults, keys: ["widgetAppearance", "desktopPanelEnabled"]) { [weak self] in
+            self?.settingsChanged()
         }
+        if defaults.object(forKey: "desktopPanelEnabled") == nil {
+            defaults.set(lastAppearance == "transparent", forKey: "desktopPanelEnabled")
+        }
+        if defaults.bool(forKey: "desktopPanelEnabled") { show() }
+    }
+
+    private func settingsChanged() {
+        isVisible = defaults?.bool(forKey: "desktopPanelEnabled") ?? false
+        let appearance = defaults?.string(forKey: "widgetAppearance")
+        guard appearance != lastAppearance else { return }
+        lastAppearance = appearance
+        if appearance == "transparent", !isVisible { show() }
     }
 
     func show() {
-        guard !isVisible else { return }
+        guard let defaults, let executable = Bundle.main.executableURL else { return }
+        defaults.set(true, forKey: "desktopPanelEnabled")
+        let helper = Process()
+        helper.executableURL = executable
+        helper.arguments = ["--desktop-panel"]
+        helper.standardInput = FileHandle.nullDevice
+        helper.standardOutput = FileHandle.nullDevice
+        helper.standardError = FileHandle.nullDevice
+        do {
+            try helper.run()
+            isVisible = true
+        } catch {
+            defaults.set(false, forKey: "desktopPanelEnabled")
+            isVisible = false
+            logger.error("Could not start the desktop panel helper.")
+        }
+    }
+
+    func hide() {
+        defaults?.set(false, forKey: "desktopPanelEnabled")
+        isVisible = false
+    }
+
+    func runHelper() {
+        guard let defaults, let root = try? Storage.root(),
+              defaults.bool(forKey: "desktopPanelEnabled") else { return }
+        // Opening the main app again must not create a second desktop panel.
+        let lock = open(root.appendingPathComponent("desktop-panel.lock").path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        guard lock >= 0 else { return }
+        defer { close(lock) }
+        guard flock(lock, LOCK_EX | LOCK_NB) == 0 else { return }
+        let application = NSApplication.shared
+        application.setActivationPolicy(.accessory)
+        settingsObserver = PanelPreferenceObserver(defaults, keys: ["widgetAppearance", "desktopPanelEnabled", "desktopPanelSize"]) { [weak self] in
+            self?.updateHelper()
+        }
+        frostObserver = PanelPreferenceObserver(.standard, keys: ["frostedPanelBackground"]) { [weak self] in
+            self?.updateHelper()
+        }
+        // Watch the directory so atomically replaced cache files still send updates.
+        let directory = open(root.path, O_EVTONLY)
+        if directory >= 0 {
+            let source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: directory, eventMask: .write, queue: .main)
+            source.setEventHandler { [weak self] in
+                Task { @MainActor in self?.reloadSnapshot() }
+            }
+            source.setCancelHandler { close(directory) }
+            source.resume()
+            cacheObserver = source
+        }
+        reloadSnapshot()
+        guard defaults.bool(forKey: "desktopPanelEnabled") else { return }
+        showWindow()
+        application.run()
+    }
+
+    private func updateHelper() {
+        guard defaults?.bool(forKey: "desktopPanelEnabled") == true else {
+            panel?.orderOut(nil)
+            cacheObserver?.cancel()
+            NSApplication.shared.terminate(nil)
+            return
+        }
+        updateContent()
+    }
+
+    private func reloadSnapshot() {
+        let latest = Storage.read()
+        if latest != snapshot { snapshot = latest }
+    }
+
+    private func showWindow() {
         if panel == nil {
             let window = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 344, height: 164), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
             window.title = "GitHub Pulse Desktop"
@@ -195,44 +281,54 @@ extension Notification.Name {
         }
         updateContent()
         panel?.orderFrontRegardless()
-        isVisible = true
-    }
-
-    func resize(_ size: String) {
-        self.size = size
-        if panel?.isVisible == true { updateContent() }
-    }
-
-    func hide() {
-        panel?.orderOut(nil)
-        panel?.contentView = nil
-        lastAppearance = defaults?.string(forKey: "widgetAppearance") ?? "system"
-        isVisible = false
+        logger.info("Desktop panel helper displayed its window.")
     }
 
     private func updateContent() {
         guard let panel else { return }
+        let size = defaults?.string(forKey: "desktopPanelSize") ?? "Medium"
         let dimensions = NSSize(width: size == "Small" ? 164 : 344, height: size == "Large" ? 344 : 164)
         let topLeft = NSPoint(x: panel.frame.minX, y: panel.frame.maxY)
-        panel.contentView = NSHostingView(rootView: DesktopPulseCard(size: size))
+        panel.contentView = NSHostingView(rootView: DesktopPulseCard(size: size, model: self))
         panel.setContentSize(dimensions)
         panel.setFrameTopLeftPoint(topLeft)
     }
 }
 
+private final class PanelPreferenceObserver: NSObject {
+    private let defaults: UserDefaults
+    private let keys: [String]
+    private let changed: @MainActor @Sendable () -> Void
+
+    init(_ defaults: UserDefaults, keys: [String], changed: @escaping @MainActor @Sendable () -> Void) {
+        self.defaults = defaults
+        self.keys = keys
+        self.changed = changed
+        super.init()
+        for key in keys { defaults.addObserver(self, forKeyPath: key, options: [], context: nil) }
+    }
+
+    deinit {
+        for key in keys { defaults.removeObserver(self, forKeyPath: key) }
+    }
+
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
+        Task { @MainActor [changed] in changed() }
+    }
+}
+
 private struct DesktopPulseCard: View {
     let size: String
+    @ObservedObject var model: PulseDesktopPanel
     @AppStorage("frostedPanelBackground") private var frostedPanelBackground = true
     @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
-    @State private var snapshot = Storage.read()
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
-    private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
     private var isClear: Bool {
         appearance == "transparent" && !frostedPanelBackground && !reduceTransparency && contrast != .increased
     }
     var body: some View {
-        PulseCard(snapshot: snapshot, desktop: true, large: size == "Large", small: size == "Small")
+        PulseCard(snapshot: model.snapshot, desktop: true, large: size == "Large", small: size == "Small")
             .shadow(color: isClear ? .black.opacity(0.6) : .clear, radius: 2, y: 1)
             .background {
                 if appearance == "light" { Color.white }
@@ -245,13 +341,6 @@ private struct DesktopPulseCard: View {
             .contextMenu {
                 Button("Hide desktop panel") { PulseDesktopPanel.shared.hide() }
             }
-            .onReceive(timer) { _ in reloadSnapshot() }
-            .onReceive(NotificationCenter.default.publisher(for: .pulseStorageChanged)) { _ in reloadSnapshot() }
-    }
-
-    private func reloadSnapshot() {
-        let latest = Storage.read()
-        if latest != snapshot { snapshot = latest }
     }
 }
 

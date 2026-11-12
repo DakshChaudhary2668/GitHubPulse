@@ -138,8 +138,11 @@ background while keeping the card visible. The clear panel uses a subtle shadow
 for contrast. Light mode keeps the text unshadowed.
 
 Drag the panel to move it, use **Widget preview** to resize it, or right-click and
-choose **Hide desktop panel**. GitHub Pulse needs to stay running. To show only
-the panel, remove the native desktop widget through its right-click menu.
+choose **Hide desktop panel**. The panel stays open when you quit the main app.
+Its helper exits when you hide the panel. It watches saved settings and activity
+for changes and shows a fixed sync time, so it can idle between updates. Use
+**Save & refresh** in the app or a native widget to fetch new activity. To show
+only the panel, remove the native desktop widget through its right-click menu.
 
 **Native widget.** Transparent uses a faint tint, soft highlights and a reflective
 edge within the surface provided by WidgetKit. macOS controls the final tint.

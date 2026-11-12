@@ -7,6 +7,7 @@
 - Removed the dark shadow from text on solid panel backgrounds.
 - Preserved avatar detail in tinted widgets on macOS 15 and later.
 - Compute the heatmap once per redraw, skip unchanged panel snapshots and check Keychain status off the main thread.
+- Keep the desktop panel open after quitting the app with a helper that responds to changes without polling.
 
 ## 1.0.0 — Proposed, unreleased
 

@@ -120,15 +120,25 @@ struct PulseCard: View {
         }
     }
     private var themeButton: some View {
-        Button(intent: SetPulseAppearance(appearance: nextAppearance)) {
-            Image(systemName: appearance == "light" ? "sun.max" : (appearance == "dark" ? "moon" : "circle.lefthalf.filled"))
-                .font(.caption).padding(4)
+        let icon = Image(systemName: appearance == "light" ? "sun.max" : (appearance == "dark" ? "moon" : "circle.lefthalf.filled"))
+            .font(.caption).padding(4)
+        return Group {
+            if desktop {
+                Button { SetPulseAppearance.apply(nextAppearance) } label: { icon }
+            } else {
+                Button(intent: SetPulseAppearance(appearance: nextAppearance)) { icon }
+            }
         }.buttonStyle(.plain)
             .accessibilityLabel("Appearance: \(appearance). Switch to \(nextAppearance)")
     }
     private var speaker: some View {
-        Button(intent: SpeakPulseContributions()) {
-            Image(systemName: "speaker.wave.2").font(.caption).padding(4)
+        let icon = Image(systemName: "speaker.wave.2").font(.caption).padding(4)
+        return Group {
+            if desktop {
+                Button { PulseSpeech.shared.speak() } label: { icon }
+            } else {
+                Button(intent: SpeakPulseContributions()) { icon }
+            }
         }.buttonStyle(.plain).accessibilityLabel("Speak contributions")
     }
     private func avatar(size: CGFloat) -> some View {
@@ -193,7 +203,7 @@ struct PulseCard: View {
                 Spacer(minLength: 3)
             }
             if !small { Text(stale ? "Cached" : "Synced") }
-            Text(snapshot.synced, style: .relative).lineLimit(1).minimumScaleFactor(0.8)
+            Text(snapshot.synced, style: desktop ? .time : .relative).lineLimit(1).minimumScaleFactor(0.8)
         }.font(.system(size: small ? 8 : 9)).foregroundStyle(mutedInk)
     }
 }
@@ -242,16 +252,20 @@ struct SetPulseAppearance: AppIntent {
     init() {}
     init(appearance: String) { self.appearance = appearance }
     func perform() async throws -> some IntentResult {
+        Self.apply(appearance)
+        return .result()
+    }
+
+    static func apply(_ appearance: String) {
         guard ["system", "light", "dark", "transparent"].contains(appearance), !Storage.group.isEmpty,
-              let defaults = UserDefaults(suiteName: Storage.group) else { return .result() }
-        guard defaults.string(forKey: "widgetAppearance") != appearance else { return .result() }
+              let defaults = UserDefaults(suiteName: Storage.group) else { return }
+        guard defaults.string(forKey: "widgetAppearance") != appearance else { return }
         defaults.set(Date().timeIntervalSince1970, forKey: "appearanceChangedAt")
         defaults.set(appearance, forKey: "widgetAppearance")
         // WidgetKit reloads after an extension intent; only host actions need this request.
         if Bundle.main.bundleURL.pathExtension != "appex" {
             WidgetCenter.shared.reloadTimelines(ofKind: "GitHubPulse")
         }
-        return .result()
     }
 }
 
