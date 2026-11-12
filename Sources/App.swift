@@ -35,12 +35,14 @@ struct SettingsView: View {
         ScrollView {
         VStack(alignment: .leading, spacing: 18) {
             Text("GitHub Pulse").font(.title2.bold())
-            Toggle("Transparent desktop panel", isOn: Binding(
+            Toggle("Show desktop panel", isOn: Binding(
                 get: { desktopPanel.isVisible },
                 set: { if $0 { desktopPanel.show() } else { desktopPanel.hide() } }
             ))
-            Toggle("Frosted panel background", isOn: $frostedPanelBackground)
-                .disabled(!desktopPanel.isVisible || appearance != "transparent")
+            if appearance == "transparent" {
+                Toggle("Frosted panel background", isOn: $frostedPanelBackground)
+                    .disabled(!desktopPanel.isVisible)
+            }
             Picker("Widget preview", selection: $previewSize) {
                 ForEach(["Small", "Medium", "Large"], id: \.self) { Text($0) }
             }.pickerStyle(.segmented)
@@ -59,7 +61,7 @@ struct SettingsView: View {
             PulseCard(snapshot: snapshot, large: previewSize == "Large", small: previewSize == "Small", glass: glassPreview)
                 .frame(width: previewSize == "Small" ? 164 : 344, height: previewSize == "Large" ? 344 : 164)
                 .frame(maxWidth: .infinity)
-            Text("Transparent opens the desktop panel. Turn off frosting for a clear background. Keep GitHub Pulse running to use the panel.")
+            Text("Transparent opens the desktop panel. Turning off frosting leaves the panel visible with a clear background. Keep GitHub Pulse running to use the panel.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Button("Speak contributions", systemImage: "speaker.wave.2") { speakContributions() }
