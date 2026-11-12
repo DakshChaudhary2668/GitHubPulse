@@ -212,3 +212,43 @@ A running extension from before the app replacement produced a confirmed bundle-
 - Final installed single-reload action changed Dark → System, observed on the
   next check 14 seconds after the tap (not an exact transition-time measurement).
   User authorized pushing current fixes; no stable release is authorized.
+# Avatar rendering verification — 2026-11-05
+
+- Build 11 adds desaturated accented image rendering to the shared avatar on macOS 15+, with an original-image fallback on macOS 14. Authentication, storage and contribution calculations are unchanged.
+- Signed Release host and embedded extension built successfully; installed bundle passed strict deep signature verification. Core and isolated storage regression tests passed.
+- Installed Medium desktop widget captured in monochrome rendering: photo detail, heatmap and statistics visible, replacing the previously observed solid avatar circle. System appearance was restored after a temporary Light selection to request a fresh timeline.
+- Small/Large and macOS 14 fallback were not separately runtime-tested for this change. Foreground-app switching automation encountered a user-change error, so repeated transitions are not claimed verified.
+- Working-directory publication scan flags an existing .DS_Store; it must not be published. No push or release performed.
+
+# Transparent surface verification — 2026-11-05
+
+- Build 12 reduces widget container fills to 20% in all appearances, preserving opaque accessibility fallbacks; the host preview uses native clear glass on macOS 26+. Secondary text opacity increased to 75% for readability.
+- Signed Release build, strict installed-bundle signature verification and existing core/storage regression tests passed. Installed locally with a rollback archive; no account or credential modifications and no push.
+- Medium widget captures after host and Music observations retain photo detail, heatmap and statistics. Original System setting restored. A Finder desktop interaction failed with noWindowsAvailable. Widget-only captures do not verify wallpaper transparency; repeated focus transitions, light wallpaper and Small/Large runtime appearance remain unverified.
+
+# Zero-fill appearance — 2026-11-05
+
+- Build 13 adds an explicit Transparent shared appearance to host picker and widget cycle. Widget container uses Color.clear; host removes its surface. Reduce Transparency and increased contrast retain opaque fallbacks.
+- Signed build, strict pre-install signature check and regression suite passed. Installed and selected Transparent through host UI; Medium capture retains content but still shows a system surface. Complete desktop transparency is not verified or claimed fixed. No system appearance changes in this test, no push.
+
+# Preserved-background diagnostic — 2026-11-05
+
+- Build 15 uses containerBackgroundRemovable(false). Signed Release build and strict signature verification passed; installed locally.
+- Medium Light captured with white surface, black text and coloured heatmap/photo. Transparent captured afterward still has a black system surface despite Color.clear. Transparency remains unresolved. Background preservation changes behaviour in contexts that require removable backgrounds; other families/contexts not runtime-tested. No push.
+
+# Glass-inspired Transparent finish — 2026-11-05
+
+- Build 16 replaces zero-fill Transparent with a deliberate glass-inspired static surface: 10% white tint, a restrained 18%-to-clear highlight and a 0.75-point reflective edge. Host Transparent preview again uses native clear glass where available. Layout, account storage and calculations unchanged.
+- Signed Release build, strict signature check and core/isolated storage regression suite passed. Installed with rollback archive; no publication performed.
+- Actual Medium desktop captures show Dark as black and Transparent as a lighter frosted surface; avatar, green heatmap and statistics visible. Widget appearance buttons used to select Transparent. No live blur/refraction or wallpaper transparency claimed. Small/Large, accessibility permutations and older macOS not separately runtime-tested for this finish.
+
+# App-managed transparent panel — 2026-11-05
+
+- Build 17 adds an optional borderless, nonopaque AppKit panel with clear window background and no card surface. It reuses PulseCard and the existing cache; adds no GitHub calls or entitlements. Optional behind-window NSVisualEffectView provides frosting. Accessibility Reduce Transparency/increased contrast selects black fallback.
+- Panel is session-only, behind normal application windows, movable by its background, and uses the preview size selector. App must stay running. Shared cache is reread every two seconds while its view exists; host account/cache changes also notify it immediately. Production account switching/disconnect was not exercised.
+- Signed host and embedded widget Release build and strict signature verification passed. Existing core and isolated storage tests passed. Installed with rollback archive. No push/tag/release.
+- Host toggle was observed enabled with frosting off. Closing host caused computer-use capture timeouts; final panel wallpaper transparency, drag persistence, size layouts, frosted rendering, speech, app-switching and multiple Spaces are UNVERIFIED. Later frost-control automation returned elementHasNoFrame/user-change conflict; no successful frost toggle claimed. Native widget remains available.
+
+- Build 24 passed the signed Release build and core/storage regression suite. The installed settings confirmed frosting is hidden outside Transparent and turning it off leaves panel visibility enabled. Light-mode text shadow was removed in code; the desktop panel appearance was not captured after that change.
+- The heatmap benchmark measured the calendar calculation only. It changed from 196 calls taking approximately 1.38 seconds to one call taking under 1 millisecond on the test Mac. Account storage and permissions are unchanged.
+- The local development-profile renewal agent completed its initial expiry check without rebuilding. A scheduled renewal has not yet run. The agent, its logs, and its private source and signing configuration are excluded from publication.

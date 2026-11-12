@@ -45,6 +45,7 @@ No clutter. No distractions. Just a native widget that feels like it belongs on 
 | **Your GitHub Identity** | Actual profile avatar and configurable username |
 | **Contribution Insights** | Annual contribution total and current streak |
 | **Native macOS Widgets** | Small, Medium and Large layouts, each with a contribution heatmap |
+| **Transparent Desktop Panel** | An optional movable panel with a clear or frosted background |
 | **Smart Refresh** | System-managed updates with manual refresh |
 | **Local Talkback** | Speak annual contributions, day streak and saved sync time using macOS speech, without another API key |
 | **Offline Ready** | Cached contributions remain visible without internet |
@@ -99,7 +100,7 @@ That's it. Your GitHub activity, always in sight.
 | **SwiftUI + WidgetKit** | **macOS Keychain** | **System-managed refresh** |
 | No browser wrappers | No analytics or telemetry | No aggressive polling |
 
-The host offers a Glass Preview toggle, native glass on macOS 26+, and a material fallback on macOS 14–15. Reduce Transparency and increased contrast select an opaque host surface. WidgetKit controls desktop backgrounds and tinting; the host toggle does not override desktop settings. GitHub-green cells remain visible in Full Color mode.
+**Glass host preview** uses native glass on macOS 26 and later, with a material fallback on earlier supported versions. Reduce Transparency and increased contrast use an opaque surface. WidgetKit manages the native widget’s tint, and Full Color preserves the green heatmap.
 
 It requests refresh opportunities approximately every 30 minutes, but macOS ultimately controls the update schedule. Manual refresh is available in the host app.
 
@@ -115,6 +116,9 @@ Theme switching and speaking saved contributions do not require internet.
 Appearance reloads briefly reuse saved activity instead of waiting for GitHub;
 normal data refresh resumes afterward. WidgetKit still controls render timing,
 so appearance changes are not guaranteed to be instantaneous.
+The heatmap computes its 14-week grid once per redraw. The desktop panel skips
+redraws for unchanged cached activity, and the app checks Keychain status off
+the main thread.
 
 Reconnecting to the internet does not guarantee an immediate refresh. New data
 arrives at the next system-scheduled opportunity, or when you open the app and
@@ -123,23 +127,30 @@ macOS may run it later. Disconnect intentionally removes the saved account data.
 
 ### Appearance
 
-Use the app's **Appearance (all widgets)** selector for System, Light or Dark.
-Each widget also has an icon button that cycles System → Light → Dark → System.
-Medium/Large place it beside the speaker; Small places both controls below the photo
-so the username retains its full-width row. The preference is shared across
-widgets, persists locally, and does not change GitHub credentials or activity.
-Light uses a white background and dark text; Dark uses black with light text.
-System follows macOS. Host glass preview remains available in every theme. Reduce Transparency and
-increased contrast use opaque fallbacks. Desktop backgrounds retain translucency
-where macOS permits it; widgets do not apply custom blur.
-macOS desktop tinting and background removal can override the final widget look.
+Choose an appearance in the app, or use the theme button on the card to cycle
+**System → Light → Dark → Transparent → System**. Light uses dark text on white.
+Dark uses light text on black. System follows macOS.
+
+**Desktop panel.** Select **Transparent** while the app is running, or turn on
+**Show desktop panel**. The panel stays open as you change themes. In Transparent
+mode, **Frosted panel background** adds wallpaper blur. Uncheck it for a clear
+background while keeping the card visible. The clear panel uses a subtle shadow
+for contrast. Light mode keeps the text unshadowed.
+
+Drag the panel to move it, use **Widget preview** to resize it, or right-click and
+choose **Hide desktop panel**. GitHub Pulse needs to stay running. To show only
+the panel, remove the native desktop widget through its right-click menu.
+
+**Native widget.** Transparent uses a faint tint, soft highlights and a reflective
+edge within the surface provided by WidgetKit. macOS controls the final tint.
+On macOS 15 and later, tinted profile photos retain their detail in monochrome.
 
 ### Widget sizes and local speech
 
 Small and Large use macOS's square footprints; Medium is a wide rectangle. All
 three show the 14-week heatmap, profile, annual contribution total and streak.
-The host preview selector changes only the preview, not an existing desktop widget.
-Use the desktop widget context menu to change its size.
+The host preview selector also resizes the app-managed desktop panel. Use the
+native widget’s context menu to change its size.
 
 Click **Speak contributions** below the host preview, or **Stop speaking** to
 interrupt playback. All three sizes have a speaker button that runs a background audio action
@@ -244,6 +255,12 @@ Tests are standalone Swift regression executables, not XCTest. Unsigned builds c
 - **Desktop widgets disabled:** Enable them in System Settings → Desktop & Dock.
 - **Appearance tinted:** Choose Full Color widget style.
 - **Signing issues:** Check both targets' development team and resolved entitlements.
+- **Development build won’t open after a week:** Apple Personal Team profiles
+  expire after seven days. Rebuild and reinstall the signed app and embedded
+  widget with renewed profiles. The maintainer’s local renewal job checks profile
+  expiry offline and uses Xcode online when renewal is due. Its schedule, signing
+  settings and private source copy live outside the published project.
+  [Apple’s Personal Team limits](https://developer.apple.com/help/account/basics/about-your-developer-account)
 - **Authentication errors:** Check token expiration, permissions, organization policies and rate limits.
 - **Xcode components missing:** Complete Xcode first-launch setup using Apple's supported tooling.
 

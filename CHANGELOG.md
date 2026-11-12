@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — transparent panel and rendering performance
+
+- Added Transparent to the shared theme cycle and an optional desktop panel with clear and frosted backgrounds.
+- Added separate controls for panel visibility, Transparent-mode frosting and host preview glass. The panel opens away from the native widget and keeps its top-left corner when resized.
+- Removed the dark shadow from text on solid panel backgrounds.
+- Preserved avatar detail in tinted widgets on macOS 15 and later.
+- Compute the heatmap once per redraw, skip unchanged panel snapshots and check Keychain status off the main thread.
+
 ## 1.0.0 — Proposed, unreleased
 
 - Native SwiftUI settings application and medium/large WidgetKit widgets.
@@ -31,6 +39,12 @@ Not published or tagged. Signed account-switch/disconnect integration validation
 - Small speaker link and spaced right-aligned contribution/streak statistics.
 
 ## Unreleased — background actions and release hardening
+
+- Optional transparent AppKit desktop panel with cached GitHub activity, size controls and optional behind-window frosting; requires the host app to remain running.
+
+- Glass-inspired Transparent appearance with a subtle tint, soft highlights and reflective edge; native clear glass in the supported host preview.
+
+- Preserve profile photo detail in tinted desktop widgets instead of a solid circle.
 
 - Widget speech runs as a background audio action without requesting a window.
 - Restored glass in Light/Dark and added translucent accessible widget backgrounds.
