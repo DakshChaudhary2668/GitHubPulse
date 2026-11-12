@@ -31,16 +31,15 @@ struct PulseCard: View {
         }
     }
     private var stale: Bool { failed || snapshot.map { Date().timeIntervalSince($0.synced) > 3600 } ?? true }
-    private var days: [Day?] { snapshot?.visible() ?? [] }
-    private var periodTotal: Int { days.compactMap { $0 }.reduce(0) { $0 + $1.contributionCount } }
-    private var activeDays: Int { days.compactMap { $0 }.filter { $0.contributionCount > 0 }.count }
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             header
             if let snapshot {
+                let days = snapshot.visible()
+                let activeDays = days.reduce(0) { $0 + (($1?.contributionCount ?? 0) > 0 ? 1 : 0) }
                 Spacer(minLength: 0)
                 if large {
-                    largeActivity(snapshot)
+                    largeActivity(snapshot, days: days, activeDays: activeDays)
                 } else if small {
                     HStack(spacing: 6) {
                         VStack(spacing: 0) {
@@ -53,10 +52,10 @@ struct PulseCard: View {
                             metric("\(snapshot.streak())", label: "Day streak", size: 12)
                         }.fixedSize(horizontal: true, vertical: false)
                     }
-                    heatmap.frame(width: 99, height: 48).frame(maxWidth: .infinity)
+                    heatmap(days).frame(width: 99, height: 48).frame(maxWidth: .infinity)
                 } else {
                     HStack(spacing: 6) {
-                        heatmap
+                        heatmap(days)
                         VStack(alignment: .leading, spacing: large ? 8 : 4) {
                             metric("\(snapshot.annualTotal)", label: "Past year", size: large ? 24 : 16)
                             metric("\(snapshot.streak())", label: "Day streak", size: large ? 18 : 12)
@@ -65,7 +64,7 @@ struct PulseCard: View {
                     }.frame(maxWidth: .infinity)
                 }
                 Spacer(minLength: 0)
-                footer(snapshot)
+                footer(snapshot, activeDays: activeDays)
             } else {
                 Text("Connect GitHub").font(small ? .subheadline.bold() : .headline)
                 Text("Open GitHub Pulse to add your token securely.").font(.caption).foregroundStyle(mutedInk)
@@ -103,14 +102,15 @@ struct PulseCard: View {
             }
         }
     }
-    private func largeActivity(_ snapshot: Snapshot) -> some View {
-        VStack(spacing: 4) {
+    private func largeActivity(_ snapshot: Snapshot, days: [Day?], activeDays: Int) -> some View {
+        let periodTotal = days.reduce(0) { $0 + ($1?.contributionCount ?? 0) }
+        return VStack(spacing: 4) {
             HStack(alignment: .top) {
                 metric("\(snapshot.annualTotal)", label: "Past year", size: 20)
                 Spacer()
                 metric("\(snapshot.streak())", label: "Day streak", size: 20)
             }
-            heatmap.frame(width: 191, height: 94)
+            heatmap(days).frame(width: 191, height: 94)
                 .frame(maxWidth: .infinity)
             HStack(alignment: .top) {
                 metric("\(periodTotal)", label: "In 14 weeks", size: 18)
@@ -153,7 +153,7 @@ struct PulseCard: View {
             Text(label).font(.system(size: small ? 8 : (large ? 11 : 9))).foregroundStyle(mutedInk)
         }.accessibilityElement(children: .combine)
     }
-    private var heatmap: some View {
+    private func heatmap(_ days: [Day?]) -> some View {
         HStack(spacing: !small && !large ? 2 : 3) {
             ForEach(0..<14) { week in
                 VStack(spacing: !small && !large ? 2 : 3) {
@@ -183,7 +183,7 @@ struct PulseCard: View {
         guard widget && renderingMode != .fullColor && day.contributionCount > 0 else { return 1 }
         return ["FIRST_QUARTILE": 0.4, "SECOND_QUARTILE": 0.6, "THIRD_QUARTILE": 0.8, "FOURTH_QUARTILE": 1.0][day.contributionLevel] ?? 1
     }
-    private func footer(_ snapshot: Snapshot) -> some View {
+    private func footer(_ snapshot: Snapshot, activeDays: Int) -> some View {
         HStack(spacing: 3) {
             Group {
                 Text(large ? "Graph: 14 weeks" : (small ? "\(activeDays) active" : "\(activeDays) active days"))
@@ -244,6 +244,7 @@ struct SetPulseAppearance: AppIntent {
     func perform() async throws -> some IntentResult {
         guard ["system", "light", "dark", "transparent"].contains(appearance), !Storage.group.isEmpty,
               let defaults = UserDefaults(suiteName: Storage.group) else { return .result() }
+        guard defaults.string(forKey: "widgetAppearance") != appearance else { return .result() }
         defaults.set(Date().timeIntervalSince1970, forKey: "appearanceChangedAt")
         defaults.set(appearance, forKey: "widgetAppearance")
         // WidgetKit reloads after an extension intent; only host actions need this request.

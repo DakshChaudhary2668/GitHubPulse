@@ -228,7 +228,8 @@ private struct DesktopPulseCard: View {
     }
 
     private func reloadSnapshot() {
-        snapshot = Storage.read()
+        let latest = Storage.read()
+        if latest != snapshot { snapshot = latest }
     }
 }
 

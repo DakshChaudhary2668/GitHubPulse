@@ -1,7 +1,7 @@
 import Foundation
 
-struct Day: Codable, Sendable { let date: String; let contributionCount: Int; let contributionLevel: String }
-struct Snapshot: Codable, Sendable {
+struct Day: Codable, Equatable, Sendable { let date: String; let contributionCount: Int; let contributionLevel: String }
+struct Snapshot: Codable, Equatable, Sendable {
     let username: String
     let days: [Day]
     let synced: Date
@@ -15,18 +15,27 @@ struct Snapshot: Codable, Sendable {
         return "\(count) GitHub \(count == 1 ? "contribution" : "contributions"). \(streakDays)-day streak. Synced at \(syncTime)."
     }
     static var calendar: Calendar { var c = Calendar(identifier: .gregorian); c.timeZone = TimeZone(secondsFromGMT: 0)!; return c }
-    static func key(_ date: Date) -> String { let f = DateFormatter(); f.calendar = calendar; f.timeZone = calendar.timeZone; f.dateFormat = "yyyy-MM-dd"; return f.string(from: date) }
+    private static func dayFormatter() -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }
+    static func key(_ date: Date) -> String { dayFormatter().string(from: date) }
     func visible(now: Date = Date()) -> [Day?] {
         let c = Self.calendar, today = c.startOfDay(for: now)
         let sunday = c.date(byAdding: .day, value: -(c.component(.weekday, from: today) - 1) - 91, to: today)!
         let map = Dictionary(days.map { ($0.date, $0) }, uniquingKeysWith: { a, _ in a })
-        return (0..<98).map { map[Self.key(c.date(byAdding: .day, value: $0, to: sunday)!)] }
+        let formatter = Self.dayFormatter()
+        return (0..<98).map { map[formatter.string(from: c.date(byAdding: .day, value: $0, to: sunday)!)] }
     }
     func streak(now: Date = Date()) -> Int {
         let map = Dictionary(days.map { ($0.date, $0.contributionCount) }, uniquingKeysWith: { a, _ in a })
-        var date = Self.calendar.startOfDay(for: now), count = 0
-        if map[Self.key(date), default: 0] == 0 { date = Self.calendar.date(byAdding: .day, value: -1, to: date)! }
-        while map[Self.key(date), default: 0] > 0 { count += 1; date = Self.calendar.date(byAdding: .day, value: -1, to: date)! }
+        let calendar = Self.calendar, formatter = Self.dayFormatter()
+        var date = calendar.startOfDay(for: now), count = 0
+        if map[formatter.string(from: date), default: 0] == 0 { date = calendar.date(byAdding: .day, value: -1, to: date)! }
+        while map[formatter.string(from: date), default: 0] > 0 { count += 1; date = calendar.date(byAdding: .day, value: -1, to: date)! }
         return count
     }
 }
