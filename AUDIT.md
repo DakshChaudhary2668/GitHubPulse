@@ -257,3 +257,4 @@ A running extension from before the app replacement produced a confirmed bundle-
 
 - Build 25 uses a separate panel process of the signed app. It watches shared settings and cache changes, shows a fixed sync time, and stops when the panel is hidden. The helper does not start its own GitHub requests.
 - Signed Release build and regression tests passed. In the installed app, hiding the panel stopped the helper. After reopening the panel and quitting the main app, only the helper remained, and its window creation had been logged. Long-duration battery impact was not measured.
+- Build 26 was installed and visually checked on the Medium desktop helper after quitting the main app. All four rounded corners were visible, and the helper theme button cycled all four themes. Light showed black text without the dark shadow. Small and Large helper corner rendering were not checked separately.

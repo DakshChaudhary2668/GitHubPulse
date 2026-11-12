@@ -8,6 +8,7 @@
 - Preserved avatar detail in tinted widgets on macOS 15 and later.
 - Compute the heatmap once per redraw, skip unchanged panel snapshots and check Keychain status off the main thread.
 - Keep the desktop panel open after quitting the app with a helper that responds to changes without polling.
+- Fit the helper’s rounded corners to its window so the card edges stay intact.
 
 ## 1.0.0 — Proposed, unreleased
 

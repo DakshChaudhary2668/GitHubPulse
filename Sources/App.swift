@@ -289,7 +289,9 @@ struct SettingsView: View {
         let size = defaults?.string(forKey: "desktopPanelSize") ?? "Medium"
         let dimensions = NSSize(width: size == "Small" ? 164 : 344, height: size == "Large" ? 344 : 164)
         let topLeft = NSPoint(x: panel.frame.minX, y: panel.frame.maxY)
-        panel.contentView = NSHostingView(rootView: DesktopPulseCard(size: size, model: self))
+        let content = NSHostingView(rootView: DesktopPulseCard(size: size, dimensions: dimensions, model: self))
+        content.sizingOptions = []
+        panel.contentView = content
         panel.setContentSize(dimensions)
         panel.setFrameTopLeftPoint(topLeft)
     }
@@ -319,6 +321,7 @@ private final class PanelPreferenceObserver: NSObject {
 
 private struct DesktopPulseCard: View {
     let size: String
+    let dimensions: NSSize
     @ObservedObject var model: PulseDesktopPanel
     @AppStorage("frostedPanelBackground") private var frostedPanelBackground = true
     @AppStorage("widgetAppearance", store: UserDefaults(suiteName: Storage.group)) private var appearance = "system"
@@ -329,6 +332,7 @@ private struct DesktopPulseCard: View {
     }
     var body: some View {
         PulseCard(snapshot: model.snapshot, desktop: true, large: size == "Large", small: size == "Small")
+            .frame(width: dimensions.width, height: dimensions.height)
             .shadow(color: isClear ? .black.opacity(0.6) : .clear, radius: 2, y: 1)
             .background {
                 if appearance == "light" { Color.white }
