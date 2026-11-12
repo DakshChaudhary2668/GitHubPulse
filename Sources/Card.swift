@@ -124,7 +124,14 @@ struct PulseCard: View {
     private func avatar(size: CGFloat) -> some View {
         Group {
             if let data = snapshot?.avatar, let image = NSImage(data: data) {
-                Image(nsImage: image).resizable().scaledToFill()
+                if #available(macOS 15.0, *) {
+                    // Preserve photo detail when macOS tints inactive desktop widgets.
+                    Image(nsImage: image).resizable()
+                        .widgetAccentedRenderingMode(.desaturated)
+                        .scaledToFill()
+                } else {
+                    Image(nsImage: image).renderingMode(.original).resizable().scaledToFill()
+                }
             } else {
                 Image(systemName: "person.crop.circle.fill").resizable().scaledToFit().foregroundStyle(mutedInk)
             }
