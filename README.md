@@ -140,9 +140,13 @@ for contrast. Light mode keeps the text unshadowed.
 Drag the panel to move it, use **Widget preview** to resize it, or right-click and
 choose **Hide desktop panel**. The panel stays open when you quit the main app.
 Its helper exits when you hide the panel. It watches saved settings and activity
-for changes and shows a fixed sync time, so it can idle between updates. Use
-**Save & refresh** in the app or a native widget to fetch new activity. To show
-only the panel, remove the native desktop widget through its right-click menu.
+for changes and shows a fixed sync time, so it can idle between updates.
+To refresh while the main app is closed, open Notification Center, choose
+**Edit Widgets**, and add the native **GitHub Pulse** widget to Notification
+Center. It shares its updates with the panel without adding a second desktop
+card. macOS schedules those refreshes. Use **Save & refresh** in the app for
+an immediate request. Double-click the panel or click the native widget to
+open GitHub Pulse.
 
 **Native widget.** Transparent uses a faint tint, soft highlights and a reflective
 edge within the surface provided by WidgetKit. macOS controls the final tint.

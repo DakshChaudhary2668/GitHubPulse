@@ -34,7 +34,7 @@ struct WidgetCard: View {
                 else if appearance == "dark" { Color.black }
                 else { Color(nsColor: .windowBackgroundColor).opacity(backgroundOpacity) }
             }
-            .widgetURL(URL(string: "https://github.com/\(entry.snapshot?.username ?? "")"))
+            .widgetURL(URL(string: "githubpulse://open"))
     }
 }
 @main struct PulseWidget: Widget {

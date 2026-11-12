@@ -111,6 +111,7 @@ struct SettingsView: View {
                 } message: { Text("Removes the saved token and cached activity from this Mac. Revoke the token separately on GitHub if needed.") }
             Text("Add to desktop").font(.headline)
             Text("Control-click the desktop → Edit Widgets → GitHub Pulse. Choose Small, Medium or Large and place it on your desktop. macOS chooses refresh times; refresh opportunities are requested every 30 minutes.").font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text("Using the desktop panel? Add the native GitHub Pulse widget to Notification Center to refresh the panel’s data while the app is closed. Double-click the panel or click the native widget to open GitHub Pulse.").font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }.padding(24)
         }.frame(width: 408, height: previewSize == "Large" ? 780 : 700)
         .task(id: connectedUsername) {
@@ -154,7 +155,7 @@ struct SettingsView: View {
     }
 }
 
-@MainActor final class PulseDesktopPanel: ObservableObject {
+@MainActor final class PulseDesktopPanel: NSObject, ObservableObject, NSApplicationDelegate {
     static let shared = PulseDesktopPanel()
     @Published private(set) var isVisible = false
     @Published private(set) var snapshot: Snapshot?
@@ -164,6 +165,7 @@ struct SettingsView: View {
     private var settingsObserver: PanelPreferenceObserver?
     private var frostObserver: PanelPreferenceObserver?
     private var cacheObserver: DispatchSourceFileSystemObject?
+    private var openingMainApp = false
     private let logger = Logger(subsystem: "GitHubPulse", category: "DesktopPanel")
 
     func startObservingAppearance() {
@@ -219,6 +221,7 @@ struct SettingsView: View {
         defer { close(lock) }
         guard flock(lock, LOCK_EX | LOCK_NB) == 0 else { return }
         let application = NSApplication.shared
+        application.delegate = self
         application.setActivationPolicy(.accessory)
         settingsObserver = PanelPreferenceObserver(defaults, keys: ["widgetAppearance", "desktopPanelEnabled", "desktopPanelSize"]) { [weak self] in
             self?.updateHelper()
@@ -241,6 +244,30 @@ struct SettingsView: View {
         guard defaults.bool(forKey: "desktopPanelEnabled") else { return }
         showWindow()
         application.run()
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        if urls.contains(URL(string: "githubpulse://open")!) { openMainApp() }
+    }
+
+    func openMainApp() {
+        guard !openingMainApp, let bundleID = Bundle.main.bundleIdentifier else { return }
+        if let mainApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .first(where: { $0.activationPolicy == .regular && !$0.isTerminated }) {
+            mainApp.activate()
+            return
+        }
+
+        // LaunchServices can otherwise reuse this accessory process as the app.
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        openingMainApp = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, error in
+            Task { @MainActor in
+                self.openingMainApp = false
+                if error != nil { self.logger.error("Could not open the main app from the desktop panel.") }
+            }
+        }
     }
 
     private func updateHelper() {
@@ -342,9 +369,17 @@ private struct DesktopPulseCard: View {
                 else if frostedPanelBackground { DesktopFrost() }
             }
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .onTapGesture(count: 2, perform: openApp)
+            .accessibilityAction(named: Text("Open GitHub Pulse"), openApp)
             .contextMenu {
+                Button("Open GitHub Pulse", action: openApp)
                 Button("Hide desktop panel") { PulseDesktopPanel.shared.hide() }
             }
+    }
+
+    private func openApp() {
+        model.openMainApp()
     }
 }
 
